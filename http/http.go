@@ -17,9 +17,15 @@ func InitHTTP() error {
 		// get live source.
 		// TODO: should map source's http request and source key.
 		key := "/live/123" // for test.
+<<<<<<< HEAD
 		consumer, err := source.NewConsumer(key)
 		if err != nil {
 			glog.Info("<<<<<<<<<< can not get source >>>>>>>>>>>>>", err)
+=======
+		s, ok := source.Sources.Get(key)
+		if !ok || s == nil {
+			glog.Info("source not exist.")
+>>>>>>> master
 			return
 		}
 		defer consumer.Close()
