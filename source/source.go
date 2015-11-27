@@ -5,9 +5,7 @@ import (
 	"container/list"
 	"encoding/binary"
 	"errors"
-	"io"
 	"sync"
-	"sync/atomic"
 
 	"github.com/Alienero/IamServer/rtmp"
 
@@ -77,25 +75,20 @@ type Sourcer struct {
 	// preTagLen uint32
 	// for gc
 	sync.RWMutex
-	// number of goroutinue on hang stat.
-	HangWait int32
-	// total cached time.
-	cachedLength uint64
-	key          string
 
 	isClosed  bool
 	isRunning bool
 
-	seq        uint64
-	signalChan chan struct{}
+	seq uint64
+
+	consumers *list.List
 }
 
 // New->Flv head -> Meta head-> transport -> Close.
 func NewSourcer(key string) *Sourcer {
 	return &Sourcer{
-		msgs:       list.New(),
-		key:        key,
-		signalChan: make(chan struct{}, 5000),
+		msgs:      list.New(),
+		consumers: list.New(),
 	}
 }
 
@@ -143,35 +136,37 @@ func (s *Sourcer) Run() {
 func (s *Sourcer) Close() error {
 	s.Lock()
 	s.isClosed = true
+	s.delAllConsumer()
 	s.Unlock()
-	s.wakeAll()
 	return nil
 }
 
-// only, server not closed.
-// before you should call s.RLock().
-func (s *Sourcer) wait() {
-	isClosed := s.isClosed
-	if !isClosed {
-		atomic.AddInt32(&s.HangWait, 1)
-		s.RUnlock()
-		<-s.signalChan
-	} else {
-		s.RUnlock()
+func (s *Sourcer) addConsumer(c *Consumer) (*list.Element, error) {
+	s.Lock()
+	defer s.Unlock()
+	if s.isClosed {
+		return nil, errors.New("source is closed.")
+	}
+	return s.consumers.PushBack(c), nil
+}
+
+// Consumer call it.
+func (s *Sourcer) delConsumer(e *list.Element) {
+	c := s.consumers.Remove(e).(*Consumer)
+	if !c.isClosed {
+		close(c.bufChan)
+		c.isClosed = true
 	}
 }
 
-func (s *Sourcer) wakeAll() {
-	n := atomic.AddInt32(&s.HangWait, 0)
-	if n > 0 {
-		s.wakeImp(n)
-		atomic.AddInt32(&s.HangWait, -n)
-	}
-}
-
-func (s *Sourcer) wakeImp(n int32) {
-	for i := 0; i < int(n); i++ {
-		s.signalChan <- struct{}{}
+// Only Sourcer's close method call it.
+func (s *Sourcer) delAllConsumer() {
+	for node := s.consumers.Front(); node != nil; node = node.Next() {
+		c := node.Value.(*Consumer)
+		if !c.isClosed {
+			close(c.bufChan)
+			c.isClosed = true
+		}
 	}
 }
 
@@ -179,43 +174,13 @@ func (s *Sourcer) HandleMsg(message *rtmp.Message) {
 	m := new(msg)
 	m.Message = *message
 	s.seq++ // not need thread safe.
-	m.seq = s.seq
-
-	// add message to the end of msgs list.
-	s.msgs.PushBack(m)
-
-	// wake up all waitter.
-	s.wakeAll()
-
-	// check gc.
-	s.cachedLength += uint64(m.Header.PayloadLength)
-	if s.cachedLength > DefaultCacheMaxLength {
-		s.Lock()
-		p := s.msgs.Front()
-		i := DefaultCacheMaxLength * 0.7
-		for p != nil && s.cachedLength > uint64(i) {
-			temp := p
-			p = p.Next()
-			s.msgs.Remove(temp)
-			s.cachedLength -= uint64(temp.Value.(*msg).Header.PayloadLength)
-		}
-		s.Unlock()
-	}
-}
-
-var notGetMeta = errors.New("can't get flv meta data")
-var notRun = errors.New("source not running")
-
-// If close,unless not return.
-// TODO: add time meta.
-// TODO: ctrl the transport speed.
-func (s *Sourcer) Live(w io.Writer) error {
 	s.RLock()
-	if !s.isRunning {
-		s.RUnlock()
-		return notRun
+	for node := s.consumers.Front(); node != nil; node = node.Next() {
+		node.Value.(*Consumer).addMsg(m)
 	}
 	s.RUnlock()
+<<<<<<< HEAD
+=======
 
 	var (
 		err    error
@@ -316,14 +281,11 @@ func (s *Sourcer) Live(w io.Writer) error {
 			s.RUnlock()
 		}
 	}
+>>>>>>> master
 }
 
-// TODO: finish consumer. Imp it.
-type consumer struct {
-	src        *Sourcer
-	tagHeadBuf []byte
-	startTime  uint64
-}
+var notGetMeta = errors.New("can't get flv meta data")
+var notRun = errors.New("source not running")
 
 type msg struct {
 	rtmp.Message

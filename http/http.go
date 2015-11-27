@@ -17,17 +17,25 @@ func InitHTTP() error {
 		// get live source.
 		// TODO: should map source's http request and source key.
 		key := "/live/123" // for test.
+<<<<<<< HEAD
+		consumer, err := source.NewConsumer(key)
+		if err != nil {
+			glog.Info("<<<<<<<<<< can not get source >>>>>>>>>>>>>", err)
+=======
 		s, ok := source.Sources.Get(key)
 		if !ok || s == nil {
 			glog.Info("source not exist.")
+>>>>>>> master
 			return
 		}
-		glog.Info("get source.")
+		defer consumer.Close()
+
+		glog.Info("<<<<<<<<<<<<<<<<<<<<<<<<<got source>>>>>>>>>>>>>>>>>>>>>>>>>")
 		// set flv live stream http head.
 		// TODO: let browser not cache sources.
 		w.Header().Add("Content-Type", "video/x-flv")
-		if err := s.Live(w); err != nil {
-			glog.Info("Live get an error", err)
+		if err := consumer.Live(w); err != nil {
+			glog.Info("Live get an client error:", err)
 		}
 	})
 	http.Handle("/", http.FileServer(http.Dir(".")))
