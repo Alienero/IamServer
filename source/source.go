@@ -282,11 +282,11 @@ func (s *Sourcer) Live(w io.Writer) error {
 		// there lock for safe to get node, without nil node.
 		if node == nil {
 			// get new node.
-			if s.msgs.Len() == 0 || s.seq == hasSeq {
+			node = s.msgs.Back()
+			if s.msgs.Len() == 0 || s.seq == hasSeq || node == nil {
 				s.wait() // it will call s.RUnlock().
 				continue
 			}
-			node = s.msgs.Back()
 			// get startTime && node
 			if isFirst {
 				startTime = node.Value.(*msg).Header.Timestamp

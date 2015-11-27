@@ -18,7 +18,7 @@ func InitHTTP() error {
 		// TODO: should map source's http request and source key.
 		key := "/live/123" // for test.
 		s, ok := source.Sources.Get(key)
-		if !ok {
+		if !ok || s == nil {
 			glog.Info("source not exist.")
 			return
 		}
