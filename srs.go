@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	myhttp "github.com/Alienero/IamServer/http"
+	"github.com/Alienero/IamServer/im"
 
 	"github.com/golang/glog"
 )
@@ -21,6 +22,8 @@ func main() {
 	if err := myhttp.InitHTTP(); err != nil {
 		panic(err)
 	}
+	ims := im.NewIMServer()
+	ims.Init()
 	go func() {
 		if err := http.ListenAndServe(":9090", nil); err != nil {
 			panic(err)
