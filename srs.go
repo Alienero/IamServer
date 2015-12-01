@@ -22,8 +22,7 @@ func main() {
 	if err := myhttp.InitHTTP(); err != nil {
 		panic(err)
 	}
-	ims := im.NewIMServer()
-	ims.Init()
+	im.GlobalIM.Init()
 	go func() {
 		if err := http.ListenAndServe(":9090", nil); err != nil {
 			panic(err)

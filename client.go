@@ -5,6 +5,7 @@ import (
 	"net"
 	"runtime"
 
+	"github.com/Alienero/IamServer/im"
 	"github.com/Alienero/IamServer/rtmp"
 	"github.com/Alienero/IamServer/source"
 
@@ -178,6 +179,7 @@ func (r *SrsClient) stream_service_cycle() (err error) {
 	if err != nil {
 		return err
 	}
+	im.GlobalIM.Rm.Add("master") // by default.
 	s.SetFlvHead()
 	defer func() {
 		source.Sources.Delete(key)
@@ -254,10 +256,6 @@ func (r *SrsClient) fmle_publishing(s *source.Sourcer) (err error) {
 				return
 			}
 			glog.Info("set meta data done.")
-			// TODO remove :
-			// for test.
-			// go f(s)
-			// go f1(s)
 			continue
 		}
 		if !isPass {

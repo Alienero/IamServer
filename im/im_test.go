@@ -1,6 +1,7 @@
 package im
 
 import (
+	"encoding/json"
 	"net/http"
 	"testing"
 	"time"
@@ -16,7 +17,7 @@ func TestAddClientRecive(t *testing.T) {
 
 	server.Init()
 	t.Log("add a room")
-	server.rm.Add(roomID)
+	server.Rm.Add(roomID)
 
 	go func() {
 		if err := http.ListenAndServe("localhost:9999", nil); err != nil {
@@ -60,5 +61,10 @@ func TestAddClientRecive(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log("Get message:", string(m.Playload))
+	data, err := json.Marshal(m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("Json", string(data))
 
 }

@@ -9,6 +9,8 @@ import (
 	"golang.org/x/net/websocket"
 )
 
+var GlobalIM = NewIMServer()
+
 const (
 	IMPath   = "/im"
 	MaxCache = 4096 * 2
@@ -16,24 +18,24 @@ const (
 
 type IMServer struct {
 	addr string
-	rm   *RoomsManage
+	Rm   *RoomsManage
 }
 
 func NewIMServer() *IMServer {
 	return &IMServer{
-		rm: new(RoomsManage),
+		Rm: new(RoomsManage),
 	}
 }
 
 func (server *IMServer) Init() {
-	server.rm = NewRoomsManage()
+	server.Rm = NewRoomsManage()
 	http.Handle(IMPath, websocket.Handler(server.handle))
 }
 
 func (server *IMServer) handle(ws *websocket.Conn) {
 	consumer := NewConsumer(ws)
 	// check room_id.
-	r := server.rm.Get(consumer.room)
+	r := server.Rm.Get(consumer.room)
 	if r == nil {
 		glog.Info("room is not exist.")
 		consumer.Close()
@@ -168,7 +170,10 @@ type Consumer struct {
 }
 
 type msg struct {
+	User     string `json:"user"`
+	Time     int64  `json:"time"`
 	Type     byte   `json:"type"`
+	Color    string `json:"color"`
 	Playload []byte `json:"playload"`
 }
 
@@ -176,6 +181,7 @@ func NewConsumer(ws *websocket.Conn) *Consumer {
 	rid := ws.Request().FormValue("room_id")
 	user := ws.Request().FormValue("user_id")
 	key := ws.Request().FormValue("key")
+	// TODO: check user from session.
 	glog.Infof("im ws server got room_id:%v, user_id:%v", rid, user)
 	return &Consumer{
 		id:        user,
