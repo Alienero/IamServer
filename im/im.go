@@ -136,9 +136,9 @@ func (r *Room) Broadcast(m *msg, eid string) {
 	}
 	for node := r.consumers.Front(); node != nil; node = node.Next() {
 		c := node.Value.(*Consumer)
-		if c.id != eid {
-			c.Write(m)
-		}
+		// if c.id != eid { // TODO: add some tag.
+		c.Write(m)
+		// }
 	}
 }
 
@@ -174,7 +174,7 @@ type msg struct {
 	Time     int64  `json:"time"`
 	Type     byte   `json:"type"`
 	Color    string `json:"color"`
-	Playload []byte `json:"playload"`
+	Playload string `json:"playload"`
 }
 
 func NewConsumer(ws *websocket.Conn) *Consumer {

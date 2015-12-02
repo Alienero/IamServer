@@ -26,6 +26,7 @@ func (r *SrsServer) PrintInfo() {
 }
 
 func (r *SrsServer) Serve() error {
+	// too many open files will thows a panic.
 	addr, err := net.ResolveTCPAddr("tcp", ":1935")
 	if err != nil {
 		glog.Errorf("resolve listen address failed, err=%v", err)

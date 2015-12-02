@@ -42,7 +42,7 @@ func TestAddClientRecive(t *testing.T) {
 		t.Fatal(err)
 	}
 	m := &msg{
-		Playload: []byte("client1"),
+		Playload: "client1",
 	}
 
 	t.Log("will send.")

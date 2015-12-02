@@ -69,6 +69,7 @@ func (c *Consumer) Close() {
 
 // Range consumer sourcer must call read lock
 func (c *Consumer) addMsg(m *msg) {
+	// TODO: maybe it will let server hang.
 	length := atomic.AddInt64(&c.length, 0)
 	size := atomic.AddInt64(&c.size, 0)
 	if length == c.maxLen || size > c.maxSize {
@@ -119,7 +120,7 @@ func (c *Consumer) Live(w io.Writer) error {
 }
 
 func (c *Consumer) writeFlvHead(w io.Writer) error {
-	glog.Info("<<<<<<<write flv file head........>>>>>>>>>")
+	glog.Info("<<<<<<<write flv file head>>>>>>>>>")
 	var (
 		err error
 		ok  bool
