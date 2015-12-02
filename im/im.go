@@ -4,6 +4,8 @@ import (
 	"container/list"
 	"net/http"
 	"sync"
+	"sync/atomic"
+	"time"
 
 	"github.com/golang/glog"
 	"golang.org/x/net/websocket"
@@ -43,13 +45,14 @@ func (server *IMServer) handle(ws *websocket.Conn) {
 	}
 	// check user.
 	// TODO: Imp me. Allow all user.
-	ok, access := r.Check(consumer)
+	user, ok := GlobalIM.Rm.Check(consumer)
 	if !ok {
 		consumer.Close()
 		return
 	}
+	consumer.name = user.Name
 	consumer.r = r
-	consumer.access = access
+	consumer.access = user.Access
 	r.Add(consumer)
 	defer func() {
 		r.Del(consumer)
@@ -59,22 +62,50 @@ func (server *IMServer) handle(ws *websocket.Conn) {
 	consumer.Serve()
 }
 
+type User struct {
+	Access byte
+	Name   string
+}
+
 type RoomsManage struct {
 	sync.RWMutex
-	rooms map[string]*Room
+	rooms    map[string]*Room
+	idManage uint64
+
+	// callback methods.
+	Check func(c *Consumer) (*User, bool) // ok,access,name
+}
+
+// TODO: Imp it.
+func SessionCheck(c *Consumer) (*User, bool) {
+	return nil, false
+}
+
+func SingalCheck(c *Consumer) (*User, bool) {
+	user := c.conn.Request().FormValue("uname")
+	if user == "" {
+		user = "some bird"
+	}
+	return &User{
+		Access: 1,
+		Name:   user,
+	}, true
 }
 
 func NewRoomsManage() *RoomsManage {
 	return &RoomsManage{
 		rooms: make(map[string]*Room),
+		// default use signal check method.
+		Check: SingalCheck,
 	}
 }
 
-func (rm *RoomsManage) Add(id string) {
+func (rm *RoomsManage) Add(id string) *Room {
 	rm.Lock()
 	room := NewRoom(id)
 	rm.rooms[id] = room
 	rm.Unlock()
+	return room
 }
 
 func (rm *RoomsManage) Get(id string) *Room {
@@ -89,25 +120,23 @@ func (rm *RoomsManage) Del(id string) {
 	rm.Unlock()
 }
 
+func (rm *RoomsManage) GetID() uint64 {
+	return atomic.AddUint64(&rm.idManage, 1)
+}
+
 type Room struct {
-	id          string
-	accessCheck func(id, key, room string) (bool, byte)
 	sync.RWMutex
-	consumersMap map[string]*list.Element
+	id           string
+	consumersMap map[uint64]*list.Element
 	consumers    *list.List
 	isClosed     bool
 }
 
 func NewRoom(id string) *Room {
 	return &Room{
-		accessCheck:  func(id, key, room string) (bool, byte) { return true, 1 },
-		consumersMap: make(map[string]*list.Element),
+		consumersMap: make(map[uint64]*list.Element),
 		consumers:    list.New(),
 	}
-}
-
-func (r *Room) Check(c *Consumer) (bool, byte) {
-	return r.accessCheck(c.id, c.key, c.room)
 }
 
 func (r *Room) Add(c *Consumer) {
@@ -128,7 +157,7 @@ func (r *Room) del(c *Consumer) {
 	r.consumers.Remove(node)
 }
 
-func (r *Room) Broadcast(m *msg, eid string) {
+func (r *Room) Broadcast(m *msg, eid uint64) {
 	r.RLock()
 	defer r.RUnlock()
 	if r.isClosed {
@@ -154,9 +183,9 @@ func (r *Room) Close() error {
 }
 
 type Consumer struct {
-	id       string
-	room     string
-	key      string
+	name     string // user name.
+	id       uint64 // session id.
+	room     string // room id.
 	typ      byte
 	access   byte
 	r        *Room
@@ -178,14 +207,14 @@ type msg struct {
 }
 
 func NewConsumer(ws *websocket.Conn) *Consumer {
+	// how to get name.
+	// two method:
+	// 		1.user session.
+	// 		2.uer ws url args.
 	rid := ws.Request().FormValue("room_id")
-	user := ws.Request().FormValue("user_id")
-	key := ws.Request().FormValue("key")
-	// TODO: check user from session.
-	glog.Infof("im ws server got room_id:%v, user_id:%v", rid, user)
+	glog.Infof("im ws server got room_id:%v", rid)
 	return &Consumer{
-		id:        user,
-		key:       key,
+		id:        GlobalIM.Rm.GetID(),
 		room:      rid,
 		conn:      ws,
 		writeChan: make(chan *msg, MaxCache),
@@ -204,6 +233,8 @@ func (c *Consumer) readLoop() (err error) {
 			return
 		}
 		glog.Info("ws server:read a msg.")
+		m.User = c.name
+		m.Time = time.Now().Unix()
 		c.r.Broadcast(m, c.id)
 	}
 }

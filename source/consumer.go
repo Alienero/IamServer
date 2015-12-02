@@ -10,9 +10,8 @@ import (
 )
 
 const (
-	DefaultBufCacheLength = 4096 * 8
-	DefautLength          = DefaultCacheMaxLength
-	DefaultSize           = 1024 * 1024 * 20
+	DefautLength = 4096 * 8
+	DefaultSize  = 1024 * 1024 * 20 // 20MB
 )
 
 type Consumer struct {
@@ -44,7 +43,7 @@ func NewConsumer(key string) (*Consumer, error) {
 		return nil, notSource
 	}
 	consumer := &Consumer{
-		bufChan: make(chan *msg, DefaultBufCacheLength),
+		bufChan: make(chan *msg, DefautLength),
 		sourcer: s,
 		headBuf: make([]byte, 15),
 		maxLen:  DefautLength,
@@ -73,11 +72,14 @@ func (c *Consumer) addMsg(m *msg) {
 	length := atomic.AddInt64(&c.length, 0)
 	size := atomic.AddInt64(&c.size, 0)
 	if length == c.maxLen || size > c.maxSize {
+		glog.Info("Drop msg.")
 		return
 	}
 	atomic.AddInt64(&c.length, 1)
 	atomic.AddInt64(&c.size, int64(m.Header.PayloadLength))
+	glog.Info("Write")
 	c.bufChan <- m
+	glog.Info("Write done.")
 }
 
 func (c *Consumer) Live(w io.Writer) error {

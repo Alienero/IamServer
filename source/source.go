@@ -72,7 +72,6 @@ type Sourcer struct {
 	metaHead  *msg
 	audioMeta *msg
 	videoMeta *msg
-	// preTagLen uint32
 	// for gc
 	sync.RWMutex
 

@@ -9,12 +9,9 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-var server = NewIMServer()
-
-var roomID = "123"
-
 func TestAddClientRecive(t *testing.T) {
-
+	var server = GlobalIM
+	var roomID = "master"
 	server.Init()
 	t.Log("add a room")
 	server.Rm.Add(roomID)
@@ -28,16 +25,16 @@ func TestAddClientRecive(t *testing.T) {
 	// let listen start.
 	time.Sleep(2 * time.Second)
 
-	ws1, err := websocket.Dial("ws://localhost:9999/im?room_id="+roomID+"&user_id=1", "", "http://localhost:9999")
+	ws1, err := websocket.Dial("ws://localhost:9999/im?room_id="+roomID+"&uname=1", "", "http://localhost:9999")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	ws2, err := websocket.Dial("ws://localhost:9999/im?room_id="+roomID+"&user_id=2", "", "http://localhost:9999")
+	ws2, err := websocket.Dial("ws://localhost:9999/im?room_id="+roomID+"&uname=2", "", "http://localhost:9999")
 	if err != nil {
 		t.Fatal(err)
 	}
-	ws3, err := websocket.Dial("ws://localhost:9999/im?room_id="+roomID+"&user_id=3", "", "http://localhost:9999")
+	ws3, err := websocket.Dial("ws://localhost:9999/im?room_id="+roomID+"&uname=3", "", "http://localhost:9999")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -32,6 +32,6 @@ func InitHTTP() error {
 			glog.Info("Live get an client error:", err)
 		}
 	})
-	http.Handle("/", http.FileServer(http.Dir(".")))
+	http.Handle("/", http.FileServer(http.Dir("../")))
 	return nil
 }
