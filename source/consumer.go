@@ -46,9 +46,7 @@ type Consumer struct {
 var notSource = errors.New("source not found.")
 
 func NewConsumer(key string) (*Consumer, error) {
-	glog.Info("[Hang]: get source hang!")
 	s, ok := Sources.Get(key)
-	glog.Info("[Hang]: get source hang done!")
 	if !ok {
 		return nil, notSource
 	}

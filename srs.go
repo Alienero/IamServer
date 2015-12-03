@@ -20,11 +20,14 @@ import (
 
 	myhttp "github.com/Alienero/IamServer/http"
 	"github.com/Alienero/IamServer/im"
+	"github.com/Alienero/IamServer/monitor"
 
 	"github.com/golang/glog"
 )
 
 var isDebug = true
+
+var hostName = flag.String("name", "请叫我丑的遁地啊", "")
 
 func main() {
 	if isDebug {
@@ -38,6 +41,7 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 	flag.Parse()
+	monitor.Monitor.SetName(*hostName, "Testing Room")
 	defer glog.Flush()
 	if err := flag.Set("logtostderr", "true"); err != nil {
 		panic(err)
