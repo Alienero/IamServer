@@ -1,36 +1,37 @@
 package http
 
 import (
-	// "html/template"
+	"encoding/json"
+	"html/template"
 	"net/http"
 
+	"github.com/Alienero/IamServer/im"
+	"github.com/Alienero/IamServer/monitor"
 	"github.com/Alienero/IamServer/source"
 
 	"github.com/golang/glog"
 )
 
 func InitHTTP() error {
-	// tmpl, err := template.ParseFiles("../play.tpl")
-	// if err != nil {
-	// 	glog.Fatal("parse template error:", err)
-	// 	return err
-	// }
+	tmpl, err := template.ParseFiles("../play.tpl")
+	if err != nil {
+		glog.Fatal("parse template error:", err)
+		return err
+	}
 	http.HandleFunc("/live", func(w http.ResponseWriter, r *http.Request) {
 		glog.Info("http: get an request.", r.RequestURI, r.Method)
 		if r.Method != "GET" {
 			return
 		}
 		// get live source.
-		// TODO: should map source's http request and source key.
-		key := "/live/123" // for test.
+		key := r.FormValue("key")
+		key = "/live/123" // for test.
 		consumer, err := source.NewConsumer(key)
 		if err != nil {
-			glog.Info("<<<<<<<<<< can not get source >>>>>>>>>>>>>", err)
+			glog.Info("can not get source", err)
 			return
 		}
 		defer consumer.Close()
-
-		glog.Info("<<<<<<<<<<<<<<<<<<<<<<<<<got source>>>>>>>>>>>>>>>>>>>>>>>>>")
 		// set flv live stream http head.
 		// TODO: let browser not cache sources.
 		w.Header().Add("Content-Type", "video/x-flv")
@@ -39,9 +40,40 @@ func InitHTTP() error {
 		}
 	})
 	http.HandleFunc("/play", func(w http.ResponseWriter, r *http.Request) {
-
+		user := monitor.Monitor.GetTempInfo()
+		rid := r.FormValue("room_id")
+		if rid == "" {
+			rid = "master"
+		}
+		rm := im.GlobalIM.Rm.Get(rid)
+		if rm == nil {
+			user.LiveCount = 0
+		} else {
+			user.LiveCount = rm.GetLiveCount()
+		}
+		if err := tmpl.Execute(w, user); err != nil {
+			glog.Error(err)
+		}
 	})
-	http.HandleFunc("/count", func(w http.ResponseWriter, r *http.Request) {})
+	http.HandleFunc("/count", func(w http.ResponseWriter, r *http.Request) {
+		user := monitor.Monitor.GetTempInfo()
+		rid := r.FormValue("room_id")
+		if rid == "" {
+			rid = "master"
+		}
+		rm := im.GlobalIM.Rm.Get(rid)
+		if rm == nil {
+			user.LiveCount = 0
+		} else {
+			user.LiveCount = rm.GetLiveCount()
+		}
+		data, err := json.Marshal(user)
+		if err != nil {
+			glog.Errorf("marshal json error: %v", err)
+			return
+		}
+		w.Write(data)
+	})
 	http.Handle("/", http.FileServer(http.Dir("../")))
 	return nil
 }

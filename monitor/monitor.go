@@ -8,8 +8,13 @@ import (
 
 var Monitor = monitor{}
 
+func init() {
+	Monitor.roomName = "测试直播间"
+	Monitor.hostName = "请叫我丑的遁地"
+}
+
 type User struct {
-	LiveCount int64 // use atomic
+	LiveCount int64 `json:"liveCount"` // use atomic
 	RoomName  string
 	HostName  string
 }

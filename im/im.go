@@ -7,6 +7,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/Alienero/IamServer/monitor"
+
 	"github.com/golang/glog"
 	"golang.org/x/net/websocket"
 )
@@ -49,7 +51,6 @@ func (server *IMServer) handle(ws *websocket.Conn) {
 		return
 	}
 	// check user.
-	// TODO: Imp me. Allow all user.
 	user, ok := GlobalIM.Rm.Check(consumer)
 	if !ok {
 		consumer.Close()
@@ -58,8 +59,17 @@ func (server *IMServer) handle(ws *websocket.Conn) {
 	consumer.name = user.Name
 	consumer.r = r
 	consumer.access = user.Access
-	r.Add(consumer)
+	if ok := r.Add(consumer); !ok {
+		glog.Info("room is closed.")
+		consumer.Close()
+		return
+	}
+	monitor.Monitor.UserLogin()
+	r.UserLogin()
 	defer func() {
+		glog.Info("im user logout.")
+		monitor.Monitor.UserLogout()
+		r.UserLogout()
 		r.Del(consumer)
 		consumer.Close()
 	}()
@@ -137,6 +147,7 @@ type Room struct {
 	consumersMap map[uint64]*list.Element
 	consumers    *list.List
 	isClosed     bool
+	liveCount    int64
 }
 
 func NewRoom(id string) *Room {
@@ -147,10 +158,26 @@ func NewRoom(id string) *Room {
 	}
 }
 
-func (r *Room) Add(c *Consumer) {
+func (r *Room) UserLogin() {
+	atomic.AddInt64(&r.liveCount, 1)
+}
+
+func (r *Room) UserLogout() {
+	atomic.AddInt64(&r.liveCount, -1)
+}
+
+func (r *Room) GetLiveCount() int64 {
+	return atomic.AddInt64(&r.liveCount, 0)
+}
+
+func (r *Room) Add(c *Consumer) bool {
 	r.Lock()
-	r.consumersMap[c.id] = r.consumers.PushBack(c)
-	r.Unlock()
+	defer r.Unlock()
+	if !r.isClosed {
+		r.consumersMap[c.id] = r.consumers.PushBack(c)
+		return true
+	}
+	return false
 }
 
 func (r *Room) Del(c *Consumer) {
@@ -230,11 +257,14 @@ func NewConsumer(ws *websocket.Conn) *Consumer {
 }
 
 func (c *Consumer) Serve() {
-	go c.readLoop()
-	c.writeLoop()
+	stop := make(chan struct{}, 2)
+	go c.writeLoop(stop)
+	go c.readLoop(stop)
+	<-stop
 }
 
-func (c *Consumer) readLoop() (err error) {
+func (c *Consumer) readLoop(stop chan struct{}) (err error) {
+	defer func() { stop <- struct{}{} }()
 	for {
 		m := new(msg)
 		if err = websocket.JSON.Receive(c.conn, m); err != nil {
@@ -251,7 +281,8 @@ func (c *Consumer) readLoop() (err error) {
 	}
 }
 
-func (c *Consumer) writeLoop() {
+func (c *Consumer) writeLoop(stop chan struct{}) {
+	defer func() { stop <- struct{}{} }()
 	for {
 		m, ok := <-c.writeChan
 		if !ok {
