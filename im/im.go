@@ -280,7 +280,6 @@ func (c *Consumer) readLoop(stop chan struct{}) (err error) {
 		if err = websocket.JSON.Receive(c.conn, m); err != nil {
 			return
 		}
-		glog.Info("ws server:read a msg.")
 		if c.name == "some bird" && m.User != "" && GlobalIM.Rm.typ == Signal {
 			// pass.
 		} else {
@@ -312,7 +311,6 @@ func (c *Consumer) Write(m *msg) {
 }
 
 func (c *Consumer) write(m *msg) error {
-	glog.Info("ws server write a msg.")
 	return websocket.JSON.Send(c.conn, m)
 }
 

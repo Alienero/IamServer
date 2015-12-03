@@ -31,6 +31,16 @@ func NewSrsServer() *SrsServer {
 }
 
 func (r *SrsServer) PrintInfo() {
+	fmt.Println(`Powered by
+	      ___ _           _ _     _
+	     / __\ | _____  _(_) |__ | | ___
+	    / _\ | |/ _ \ \/ / | '_ \| |/ _ \
+	   / /   | |  __/>  <| | |_) | |  __/
+	   \/    |_|\___/_/\_\_|_.__/|_|\___|
+	   					Team
+
+https://github.com/FlexibleBroadband
+`)
 	glog.Infof("RTMP Protocol Stack:  %v", rtmp.Version)
 	glog.Infof("Will use CPU Num:%v", runtime.NumCPU())
 }

@@ -49,7 +49,7 @@ func InitHTTP() error {
 			glog.Info("Live get an client error:", err)
 		}
 	})
-	http.HandleFunc("/play", func(w http.ResponseWriter, r *http.Request) {
+	index := func(w http.ResponseWriter, r *http.Request) {
 		user := monitor.Monitor.GetTempInfo()
 		rid := r.FormValue("room_id")
 		if rid == "" {
@@ -64,7 +64,8 @@ func InitHTTP() error {
 		if err := tmpl.Execute(w, user); err != nil {
 			glog.Error(err)
 		}
-	})
+	}
+	http.HandleFunc("/index.html", index)
 	http.HandleFunc("/count", func(w http.ResponseWriter, r *http.Request) {
 		user := monitor.Monitor.GetTempInfo()
 		rid := r.FormValue("room_id")
@@ -84,6 +85,13 @@ func InitHTTP() error {
 		}
 		w.Write(data)
 	})
-	http.Handle("/", http.FileServer(http.Dir("../")))
+	var fileServer = http.FileServer(http.Dir("../"))
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" {
+			index(w, r)
+		} else {
+			fileServer.ServeHTTP(w, r)
+		}
+	})
 	return nil
 }

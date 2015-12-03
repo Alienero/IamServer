@@ -87,9 +87,9 @@ func (c *Consumer) addMsg(m *msg) {
 	}
 	atomic.AddInt64(&c.length, 1)
 	atomic.AddInt64(&c.size, int64(m.Header.PayloadLength))
-	glog.Info("Write")
+	// glog.Info("Write")
 	c.bufChan <- m
-	glog.Info("Write done.")
+	// glog.Info("Write done.")
 }
 
 func (c *Consumer) Live(w io.Writer) error {

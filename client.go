@@ -61,10 +61,8 @@ func NewSrsClient(conn *net.TCPConn) (r *SrsClient, err error) {
 func (r *SrsClient) do_cycle() (err error) {
 	defer func() {
 		r.conn.Close()
-		glog.Info("will Destroy")
 		// destroy the protocol stack.
 		r.rtmp.Destroy() // here has dead lock.
-		glog.Info("here")
 		if rc := recover(); rc != nil {
 			buff := make([]byte, 4096)
 			runtime.Stack(buff, false)
@@ -74,7 +72,7 @@ func (r *SrsClient) do_cycle() (err error) {
 
 		// ignore the normally closed
 		if err == nil {
-			glog.Info("OK client close.")
+			glog.Info("client closed.")
 			return
 		}
 		glog.Errorf("client cycle completed, err=%v", err)
@@ -265,23 +263,19 @@ func (r *SrsClient) fmle_publishing(s *source.Sourcer) (err error) {
 			continue
 		}
 		if msg.Header.Timestamp == 0 && msg.Header.IsAmf0Data() {
-			glog.Info("set meta data")
 			if err = s.SetMeta(msg); err != nil {
 				return
 			}
-			glog.Info("set meta data done.")
 			continue
 		}
 		if !isPass {
 			if n > 2 {
 				isPass = true
 			} else if msg.Header.IsAudio() && !hasAudioMeta {
-				glog.Info("get audio meta data.")
 				hasAudioMeta = true
 				s.SetAudioMeta(msg)
 				continue
 			} else if msg.Header.IsVideo() && !hasVideoMeta {
-				glog.Info("get audio meta data.")
 				hasVideoMeta = true
 				s.SetVideoMeta(msg)
 				continue

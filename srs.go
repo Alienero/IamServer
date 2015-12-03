@@ -14,7 +14,9 @@ import (
 	"flag"
 	"net/http"
 	"os"
+	"os/signal"
 	"runtime/pprof"
+	"syscall"
 
 	myhttp "github.com/Alienero/IamServer/http"
 	"github.com/Alienero/IamServer/im"
@@ -52,5 +54,9 @@ func main() {
 			panic(err)
 		}
 	}()
-	r.Serve()
+	go r.Serve()
+	signalCh := make(chan os.Signal, 1)
+	signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM)
+	<-signalCh
+	glog.Info("Signal received, initializing clean shutdown...")
 }
