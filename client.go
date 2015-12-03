@@ -180,7 +180,10 @@ func (r *SrsClient) stream_service_cycle() (err error) {
 		return err
 	}
 	room := im.GlobalIM.Rm.Add("master") // by default.
-	defer room.Close()
+	defer func() {
+		room.Close()
+		im.GlobalIM.Rm.Del(room)
+	}()
 	s.SetFlvHead()
 	defer func() {
 		source.Sources.Delete(key)

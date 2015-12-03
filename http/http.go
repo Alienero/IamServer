@@ -1,6 +1,7 @@
 package http
 
 import (
+	// "html/template"
 	"net/http"
 
 	"github.com/Alienero/IamServer/source"
@@ -9,6 +10,11 @@ import (
 )
 
 func InitHTTP() error {
+	// tmpl, err := template.ParseFiles("../play.tpl")
+	// if err != nil {
+	// 	glog.Fatal("parse template error:", err)
+	// 	return err
+	// }
 	http.HandleFunc("/live", func(w http.ResponseWriter, r *http.Request) {
 		glog.Info("http: get an request.", r.RequestURI, r.Method)
 		if r.Method != "GET" {
@@ -32,6 +38,10 @@ func InitHTTP() error {
 			glog.Info("Live get an client error:", err)
 		}
 	})
+	http.HandleFunc("/play", func(w http.ResponseWriter, r *http.Request) {
+
+	})
+	http.HandleFunc("/count", func(w http.ResponseWriter, r *http.Request) {})
 	http.Handle("/", http.FileServer(http.Dir("../")))
 	return nil
 }

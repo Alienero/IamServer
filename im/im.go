@@ -18,6 +18,11 @@ const (
 	MaxCache = 4096 * 2
 )
 
+// server type
+const (
+	Signal = 0
+)
+
 type IMServer struct {
 	addr string
 	Rm   *RoomsManage
@@ -72,6 +77,7 @@ type RoomsManage struct {
 	rooms    map[string]*Room
 	idManage uint64
 
+	typ byte // 0 is single version.
 	// callback methods.
 	Check func(c *Consumer) (*User, bool) // ok,access,name
 }
@@ -97,6 +103,7 @@ func NewRoomsManage() *RoomsManage {
 		rooms: make(map[string]*Room),
 		// default use signal check method.
 		Check: SingalCheck,
+		typ:   Signal,
 	}
 }
 
@@ -114,9 +121,9 @@ func (rm *RoomsManage) Get(id string) *Room {
 	return rm.rooms[id]
 }
 
-func (rm *RoomsManage) Del(id string) {
+func (rm *RoomsManage) Del(r *Room) {
 	rm.Lock()
-	delete(rm.rooms, id)
+	delete(rm.rooms, r.id)
 	rm.Unlock()
 }
 
@@ -134,6 +141,7 @@ type Room struct {
 
 func NewRoom(id string) *Room {
 	return &Room{
+		id:           id,
 		consumersMap: make(map[uint64]*list.Element),
 		consumers:    list.New(),
 	}
@@ -233,7 +241,11 @@ func (c *Consumer) readLoop() (err error) {
 			return
 		}
 		glog.Info("ws server:read a msg.")
-		m.User = c.name
+		if c.name == "some bird" && m.User != "" && GlobalIM.Rm.typ == Signal {
+			// pass.
+		} else {
+			m.User = c.name
+		}
 		m.Time = time.Now().Unix()
 		c.r.Broadcast(m, c.id)
 	}
