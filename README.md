@@ -16,6 +16,8 @@ cd mac-amd64-0.01/bin  &&  ./IamServer
 So easy. It will listening at port 1935(RTMP default port) for pulishing and port 9090 for play live streaming. For single mode, puslihing FMS is `rtmp://localhost/live` and Path(Key) is `123`. Also We provide some useful flags to config server.     
 `-name=[string]` can change your default live room's title.      
  Now, You should use some RTMP pulishing software. Like [OBS](https://obsproject.com/). After configuration OBS's parameters(live FMS and KEY), you can play the live streaming in your browser. The web live room provide a talk room and danmaku.
- 
+
+[中文内测版部署文档](https://ilulu.xyz/article/2001/buildliveroom.html)
+
 ##  License
  This project is under the MIT License. See the LICENSE file for the full license text.
