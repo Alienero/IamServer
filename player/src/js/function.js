@@ -7,7 +7,7 @@ var room_id="master"
 
 var CM = new CommentManager(document.getElementById('my-comment-stage'));
 // 创建一个Socket实例
-var socket = new WebSocket('ws://localhost:9090/im?room_id='+room_id+'&uname='+user_name);
+var socket = new WebSocket('ws://'+window.location.host+'/im?room_id='+room_id+'&uname='+user_name);
 
 var xmlHttpRequest;
 
