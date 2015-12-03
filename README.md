@@ -17,5 +17,5 @@ So easy. It will listening at port 1935(RTMP default port) for pulishing and por
 `-name=[string]` can change your default living room's title.      
  Now, You should use some RTMP pulishing software. Like [OBS](https://obsproject.com/). After configuration OBS's parameters(living FMS and KEY), you can play the live streaming in your browser. The web living room provide a talk room and danmaku.
  
- ## License
+ ##  License
  This project is under the MIT License. See the LICENSE file for the full license text.
