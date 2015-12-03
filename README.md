@@ -13,7 +13,7 @@ It is not ready for production evn use. Some features aren't implemented yet. Do
 ```bash
 cd mac-amd64-0.01/bin  &&  ./IamServer
 ```
-So easy. It will listening at port 1935(RTMP default port) for pulishing and port 80 for play live streaming. For single mode, puslihing FMS is `rtmp://localhost/live` and Path(Key) is `123`. Also We provide some useful flags to config server.     
+So easy. It will listening at port 1935(RTMP default port) for pulishing and port 9090 for play live streaming. For single mode, puslihing FMS is `rtmp://localhost/live` and Path(Key) is `123`. Also We provide some useful flags to config server.     
 `-name=[string]` can change your default live room's title.      
  Now, You should use some RTMP pulishing software. Like [OBS](https://obsproject.com/). After configuration OBS's parameters(live FMS and KEY), you can play the live streaming in your browser. The web live room provide a talk room and danmaku.
  
