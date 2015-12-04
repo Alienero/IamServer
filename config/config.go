@@ -24,15 +24,9 @@ type configuration struct {
 }
 
 type app struct {
-	IpWall   *ipWall  `yaml:"ip-wall"`
 	RTMP     *rtmp    `yaml:"rtmp"`
 	HTTP_FLV *httpFlv `yaml:"http-flv"`
 	IM       *im      `yaml:"im"`
-}
-
-type ipWall struct {
-	Enble     bool  `yaml:"enble"`
-	ResetTime int64 `yaml:"reset-time"`
 }
 
 // Rtmp only allow publisher live streaming.
