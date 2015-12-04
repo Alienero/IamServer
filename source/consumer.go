@@ -58,12 +58,10 @@ func NewConsumer(key string) (*Consumer, error) {
 		maxSize: DefaultSize,
 	}
 	// add consumer to sourcer.
-	glog.Info("[Hang]: get consumer hang!")
 	e, err := consumer.sourcer.addConsumer(consumer)
 	if err != nil {
 		return nil, err
 	}
-	glog.Info("[Hang]: get consumer hang done!")
 	consumer.e = e
 	return consumer, nil
 }

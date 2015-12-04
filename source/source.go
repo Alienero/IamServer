@@ -113,7 +113,6 @@ func (s *Sourcer) SetMeta(message *rtmp.Message) error {
 		}
 		if str := v.(string); str != "@setDataFrame" {
 			meta := message.Payload[int(message.Header.PayloadLength)-l:]
-			glog.Info("trace:get meta head.")
 			s.metaHead = newMsg(message)
 			s.metaHead.Payload = meta
 			s.metaHead.Header.PayloadLength = uint32(len(meta))
