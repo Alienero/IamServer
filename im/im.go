@@ -12,7 +12,9 @@ package im
 
 import (
 	"container/list"
+	"html"
 	"net/http"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -28,11 +30,13 @@ var GlobalIM = NewIMServer()
 const (
 	IMPath   = "/im"
 	MaxCache = 4096 * 2
+	// 3 sec msgs.
+	MaxMsgNum = 9
 )
 
 // server type
 const (
-	Signal = 0
+	Single = 0
 )
 
 type IMServer struct {
@@ -123,7 +127,7 @@ func NewRoomsManage() *RoomsManage {
 		rooms: make(map[string]*Room),
 		// default use signal check method.
 		Check: SingalCheck,
-		typ:   Signal,
+		typ:   Single,
 	}
 }
 
@@ -274,17 +278,38 @@ func (c *Consumer) Serve() {
 }
 
 func (c *Consumer) readLoop(stop chan struct{}) (err error) {
+	count := 0
+	t := time.Now().Add(3 * time.Second).Unix()
+	glog.Info("t", t)
 	defer func() { stop <- struct{}{} }()
 	for {
 		m := new(msg)
 		if err = websocket.JSON.Receive(c.conn, m); err != nil {
 			return
 		}
-		if c.name == "some bird" && m.User != "" && GlobalIM.Rm.typ == Signal {
-			// pass.
-		} else {
-			m.User = c.name
+		count++
+		if time.Now().Unix() > t {
+			t = time.Now().Add(3 * time.Second).Unix()
+			count = 1
 		}
+		if count > MaxMsgNum {
+			// drop msg.
+			continue
+		}
+		if c.name == "some bird" && m.User != "" && GlobalIM.Rm.typ == Single {
+			c.name = html.EscapeString(m.User)
+		}
+		m.User = c.name
+		temp := html.EscapeString(m.Playload)
+		if strings.Trim(m.Playload, " ") == "" {
+			continue
+		}
+		if temp != m.Playload {
+			// record the user.
+			glog.Warningf("user:%v(ip:%v) want xss live room",
+				c.name, c.conn.Request().RemoteAddr)
+		}
+		m.Playload = temp
 		m.Time = time.Now().Unix()
 		c.r.Broadcast(m, c.id)
 	}
