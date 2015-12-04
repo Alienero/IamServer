@@ -128,7 +128,6 @@ func (c *Consumer) Live(w io.Writer) error {
 }
 
 func (c *Consumer) writeFlvHead(w io.Writer) error {
-	glog.Info("<<<<<<<write flv file head>>>>>>>>>")
 	var (
 		err error
 		ok  bool
