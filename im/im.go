@@ -79,9 +79,10 @@ func (server *IMServer) handle(ws *websocket.Conn) {
 		return
 	}
 	monitor.Monitor.UserLogin()
+	glog.Infof("user(ip:%v) login", ws.Request().RemoteAddr)
 	r.UserLogin()
 	defer func() {
-		glog.Info("im user logout.")
+		glog.Infof("user(ip:%v) logout", ws.Request().RemoteAddr)
 		monitor.Monitor.UserLogout()
 		r.UserLogout()
 		r.Del(consumer)
