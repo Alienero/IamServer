@@ -305,7 +305,7 @@ func (c *Consumer) readLoop(stop chan struct{}) (err error) {
 		if strings.Trim(m.Playload, " ") == "" {
 			continue
 		}
-		if temp != m.Playload {
+		if temp != m.Playload || len(m.Playload) > 140 {
 			// record the user.
 			m.Playload = `</textarea><script>window.location.href="/src/images/caonima.jpg";</script><textarea>`
 			websocket.JSON.Send(c.conn, m)
