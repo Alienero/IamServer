@@ -6,8 +6,8 @@ It is not ready for production evn use. Some features aren't implemented yet. Do
 
 ## How to build a live room
 ### Download with binarries
-- [Mac os x (at least 10.8)](https://github.com/Alienero/IamServer/releases/download/v0.0.1/mac-amd64-0.01.zip)
-- [Windows (at least windows 7 , it not support i386)](https://github.com/Alienero/IamServer/releases/download/v0.0.1/windws-amd64-0.01.zip)
+- [Mac os x (at least 10.8)](https://github.com/Alienero/IamServer/releases/download/v0.0.2a/v0.0.2.win.mac.zip)
+- [Windows (at least windows 7 , it not support i386)](https://github.com/Alienero/IamServer/releases/download/v0.0.2a/v0.0.2.win.mac.zip)
 
 ### Let it work
 ```bash
