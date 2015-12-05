@@ -38,19 +38,24 @@ var (
 		0x00, 0x00, 0x00, 0x09}
 )
 
-type sourceManage struct {
+type SourceManage struct {
 	dict map[string]*Sourcer
 	sync.RWMutex
 }
 
-var (
-	sourExist = errors.New("source exits.")
-	Sources   = &sourceManage{
+func NewSourcerManage() *SourceManage {
+	return &SourceManage{
 		dict: make(map[string]*Sourcer),
 	}
+}
+
+var (
+	sourExist  = errors.New("source exits.")
+	notGetMeta = errors.New("can't get flv meta data")
+	notRun     = errors.New("source not running")
 )
 
-func (sm *sourceManage) Set(key string) (*Sourcer, error) {
+func (sm *SourceManage) Set(key string) (*Sourcer, error) {
 	sm.Lock()
 	defer sm.Unlock()
 	_, ok := sm.dict[key]
@@ -62,14 +67,14 @@ func (sm *sourceManage) Set(key string) (*Sourcer, error) {
 	return s, nil
 }
 
-func (sm *sourceManage) Get(key string) (*Sourcer, bool) {
+func (sm *SourceManage) Get(key string) (*Sourcer, bool) {
 	sm.RLock()
 	defer sm.RUnlock()
 	s, ok := sm.dict[key]
 	return s, ok
 }
 
-func (sm *sourceManage) Delete(key string) {
+func (sm *SourceManage) Delete(key string) {
 	sm.Lock()
 	delete(sm.dict, key)
 	sm.Unlock()
@@ -187,9 +192,6 @@ func (s *Sourcer) HandleMsg(message *rtmp.Message) {
 	}
 	s.RUnlock()
 }
-
-var notGetMeta = errors.New("can't get flv meta data")
-var notRun = errors.New("source not running")
 
 type msg struct {
 	rtmp.Message

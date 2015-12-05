@@ -8,7 +8,7 @@
 //	   / /   | |  __/>  <| | |_) | |  __/
 //	   \/    |_|\___/_/\_\_|_.__/|_|\___|
 
-package main
+package server
 
 // the following is the timeout for rtmp protocol,
 // to avoid death connection.

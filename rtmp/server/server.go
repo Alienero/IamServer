@@ -8,28 +8,34 @@
 //	   / /   | |  __/>  <| | |_) | |  __/
 //	   \/    |_|\___/_/\_\_|_.__/|_|\___|
 
-package main
+package server
 
 import (
 	"fmt"
 	"net"
 	"runtime"
 
+	"github.com/Alienero/IamServer/callback"
 	"github.com/Alienero/IamServer/rtmp"
+	"github.com/Alienero/IamServer/source"
 
 	"github.com/golang/glog"
 )
 
 type SrsServer struct {
-	id   uint64
-	addr string
+	id      uint64
+	addr    string
+	sources *source.SourceManage
+	cb      callback.RTMP
 }
 
-func NewSrsServer(addr string) *SrsServer {
-	r := &SrsServer{}
-	r.id = SrsGenerateId()
-	r.addr = addr
-	return r
+func NewSrsServer(addr string, cb callback.RTMP, sources *source.SourceManage) *SrsServer {
+	return &SrsServer{
+		addr:    addr,
+		sources: sources,
+		cb:      cb,
+		id:      SrsGenerateId(),
+	}
 }
 
 func (r *SrsServer) PrintInfo() {
@@ -80,7 +86,7 @@ func (r *SrsServer) serve(conn *net.TCPConn) {
 		client *SrsClient
 		err    error
 	)
-	if client, err = NewSrsClient(conn); err != nil {
+	if client, err = NewSrsClient(conn, r.sources); err != nil {
 		glog.Errorf("create client failed, err=%v", err)
 		return
 	}

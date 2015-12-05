@@ -8,7 +8,7 @@
 //	   / /   | |  __/>  <| | |_) | |  __/
 //	   \/    |_|\___/_/\_\_|_.__/|_|\___|
 
-package main
+package server
 
 import "fmt"
 

@@ -24,9 +24,10 @@ type configuration struct {
 }
 
 type app struct {
-	RTMP     *rtmp    `yaml:"rtmp"`
-	HTTP_FLV *httpFlv `yaml:"http-flv"`
-	IM       *im      `yaml:"im"`
+	RTMP              *rtmp    `yaml:"rtmp"`
+	HTTP_FLV          *httpFlv `yaml:"http-flv"`
+	IM                *im      `yaml:"im"`
+	PublicAddrMapping string   `yaml:"addr-mapping"` // public mapping private. text,go,http,lua
 }
 
 // Rtmp only allow publisher live streaming.
@@ -43,7 +44,6 @@ type httpFlv struct {
 	Enble       bool     `yaml:"enble"`
 	Listen      []string `yaml:"listen"`
 	AccessCheck []string `yaml:"access-check"` // callback method.
-	AddrMap     []string `yaml:"addr-map"`     // callback method, mapping url addr and rtmp url.
 }
 
 // A live streaming online talk room.
@@ -52,5 +52,4 @@ type im struct {
 	Enble       bool     `yaml:"enble"`
 	Listen      []string `yaml:"listen"`
 	AccessCheck []string `yaml:"access-check"` // callback method.
-	AddrMap     []string `yaml:"addr-map"`     // callback method, mapping url addr and rtmp url.
 }

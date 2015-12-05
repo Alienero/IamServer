@@ -22,7 +22,7 @@ import (
 	"github.com/golang/glog"
 )
 
-func InitHTTP() error {
+func InitHTTP(sources *source.SourceManage) error {
 	tmpl, err := template.ParseFiles("../play.tpl")
 	if err != nil {
 		glog.Fatal("parse template error:", err)
@@ -36,7 +36,7 @@ func InitHTTP() error {
 		// get live source.
 		key := r.FormValue("key")
 		key = "/live/123" // for test.
-		consumer, err := source.NewConsumer(key)
+		consumer, err := source.NewConsumer(sources, key)
 		if err != nil {
 			glog.Info("can not get source", err)
 			return

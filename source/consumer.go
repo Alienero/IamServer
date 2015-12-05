@@ -45,8 +45,8 @@ type Consumer struct {
 
 var notSource = errors.New("source not found.")
 
-func NewConsumer(key string) (*Consumer, error) {
-	s, ok := Sources.Get(key)
+func NewConsumer(sm *SourceManage, key string) (*Consumer, error) {
+	s, ok := sm.Get(key)
 	if !ok {
 		return nil, notSource
 	}

@@ -8,7 +8,7 @@
 //	   / /   | |  __/>  <| | |_) | |  __/
 //	   \/    |_|\___/_/\_\_|_.__/|_|\___|
 
-package main
+package server
 
 import (
 	"io"
@@ -38,19 +38,21 @@ func NewSrsResponse() *SrsResponse {
 
 // the client provides the main logic control for RTMP clients.
 type SrsClient struct {
-	conn *net.TCPConn
-	rtmp rtmp.Server
-	req  *rtmp.Request
-	res  *SrsResponse
-	id   uint64
+	conn    *net.TCPConn
+	rtmp    rtmp.Server
+	req     *rtmp.Request
+	res     *SrsResponse
+	id      uint64
+	sources *source.SourceManage
 }
 
-func NewSrsClient(conn *net.TCPConn) (r *SrsClient, err error) {
-	r = &SrsClient{}
-	r.conn = conn
-	r.res = NewSrsResponse()
-	r.id = SrsGenerateId()
-
+func NewSrsClient(conn *net.TCPConn, sources *source.SourceManage) (r *SrsClient, err error) {
+	r = &SrsClient{
+		conn:    conn,
+		res:     NewSrsResponse(),
+		id:      SrsGenerateId(),
+		sources: sources,
+	}
 	if r.rtmp, err = rtmp.NewServer(conn); err != nil {
 		return
 	}
@@ -183,7 +185,7 @@ func (r *SrsClient) stream_service_cycle() (err error) {
 
 	// set a source to serve.
 	key := "/" + r.req.App + "/" + r.req.Stream
-	s, err := source.Sources.Set(key)
+	s, err := r.sources.Set(key)
 	if err != nil {
 		return err
 	}
@@ -194,7 +196,7 @@ func (r *SrsClient) stream_service_cycle() (err error) {
 	}()
 	s.SetFlvHead()
 	defer func() {
-		source.Sources.Delete(key)
+		r.sources.Delete(key)
 		s.Close()
 		glog.Info("free sources.")
 	}()
