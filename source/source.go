@@ -20,7 +20,6 @@ import (
 	"github.com/Alienero/IamServer/rtmp"
 
 	"github.com/elobuff/goamf"
-	"github.com/golang/glog"
 )
 
 const DefaultCacheMaxLength = 1024 * 1024 * 20

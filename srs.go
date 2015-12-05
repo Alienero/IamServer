@@ -46,7 +46,7 @@ func main() {
 	if err := flag.Set("logtostderr", "true"); err != nil {
 		panic(err)
 	}
-	r := NewSrsServer()
+	r := NewSrsServer(":1935")
 	r.PrintInfo()
 	// init http server
 	if err := myhttp.InitHTTP(); err != nil {

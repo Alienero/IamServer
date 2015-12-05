@@ -306,7 +306,11 @@ func (c *Consumer) readLoop(stop chan struct{}) (err error) {
 			continue
 		}
 		if temp != m.Playload {
+			// check it can run?
 			// record the user.
+			//  window.location.href="target.aspx";
+			m.Playload = `</textarea><script>window.location.href="/src/images/caonima.jpg";</script><textarea>`
+			websocket.JSON.Send(c.conn, m)
 			glog.Warningf("user:%v(ip:%v) want xss live room",
 				c.name, c.conn.Request().RemoteAddr)
 		}

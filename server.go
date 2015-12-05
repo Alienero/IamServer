@@ -21,12 +21,14 @@ import (
 )
 
 type SrsServer struct {
-	id uint64
+	id   uint64
+	addr string
 }
 
-func NewSrsServer() *SrsServer {
+func NewSrsServer(addr string) *SrsServer {
 	r := &SrsServer{}
 	r.id = SrsGenerateId()
+	r.addr = addr
 	return r
 }
 
@@ -47,7 +49,7 @@ https://github.com/FlexibleBroadband
 
 func (r *SrsServer) Serve() error {
 	// too many open files will thows a panic.
-	addr, err := net.ResolveTCPAddr("tcp", ":1935")
+	addr, err := net.ResolveTCPAddr("tcp", r.addr)
 	if err != nil {
 		glog.Errorf("resolve listen address failed, err=%v", err)
 		return fmt.Errorf("resolve listen address failed, err=%v", err)
