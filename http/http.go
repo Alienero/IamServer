@@ -15,6 +15,7 @@ import (
 	"html/template"
 	"net/http"
 
+	"github.com/Alienero/IamServer/callback"
 	"github.com/Alienero/IamServer/im"
 	"github.com/Alienero/IamServer/monitor"
 	"github.com/Alienero/IamServer/source"
@@ -28,27 +29,6 @@ func InitHTTP(sources *source.SourceManage) error {
 		glog.Fatal("parse template error:", err)
 		return err
 	}
-	http.HandleFunc("/live", func(w http.ResponseWriter, r *http.Request) {
-		glog.Info("http: get an request.", r.RequestURI, r.Method)
-		if r.Method != "GET" {
-			return
-		}
-		// get live source.
-		key := r.FormValue("key")
-		key = "/live/123" // for test.
-		consumer, err := source.NewConsumer(sources, key)
-		if err != nil {
-			glog.Info("can not get source", err)
-			return
-		}
-		defer consumer.Close()
-		// set flv live stream http head.
-		// TODO: let browser not cache sources.
-		w.Header().Add("Content-Type", "video/x-flv")
-		if err := consumer.Live(w); err != nil {
-			glog.Info("Live get an client error:", err)
-		}
-	})
 	index := func(w http.ResponseWriter, r *http.Request) {
 		user := monitor.Monitor.GetTempInfo()
 		rid := r.FormValue("room_id")
@@ -94,4 +74,28 @@ func InitHTTP(sources *source.SourceManage) error {
 		}
 	})
 	return nil
+}
+
+func InitHTTPFlv(app string, sources *source.SourceManage, mapping callback.AppMapping) {
+	http.HandleFunc("/"+app, func(w http.ResponseWriter, r *http.Request) {
+		glog.Info("http: get an request.", r.RequestURI, r.Method)
+		if r.Method != "GET" {
+			return
+		}
+		// mapping: get the really remote address.
+		key := mapping.AddrMapping(r.URL.Path)
+		// get live source.
+		consumer, err := source.NewConsumer(sources, key)
+		if err != nil {
+			glog.Info("can not get source", err)
+			return
+		}
+		defer consumer.Close()
+		// set flv live stream http head.
+		// TODO: let browser not cache sources.
+		w.Header().Add("Content-Type", "video/x-flv")
+		if err := consumer.Live(w); err != nil {
+			glog.Info("Live get an client error:", err)
+		}
+	})
 }

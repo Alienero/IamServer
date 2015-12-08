@@ -25,8 +25,6 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-var GlobalIM = NewIMServer()
-
 const (
 	IMPath   = "/im"
 	MaxCache = 4096 * 2

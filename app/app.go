@@ -14,6 +14,7 @@ import (
 	"errors"
 
 	"github.com/Alienero/IamServer/config"
+	"github.com/Alienero/IamServer/http"
 	"github.com/Alienero/IamServer/source"
 
 	"github.com/golang/glog"
@@ -35,13 +36,16 @@ func InitServer() error {
 			panic("App not has rtmp.")
 		}
 		// IM & HTTP use one port, by default.
-		if application.HTTP_FLV != nil {
-			glog.Infof("Load HTTP-FLV serve:%v", n)
-			// TODO
-		}
-		if application.IM != nil {
-			glog.Infof("Load IM serve:%v", n)
-			// TODO
+		if application.HTTP != nil {
+			// TODO: start  HTTP server.
+			if application.HTTP_FLV != nil {
+				glog.Infof("Load HTTP-FLV serve:%v", n)
+				// TODO
+			}
+			if application.IM != nil {
+				glog.Infof("Load IM serve:%v", n)
+				// TODO
+			}
 		}
 	}
 	return nil

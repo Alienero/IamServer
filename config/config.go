@@ -24,10 +24,9 @@ type configuration struct {
 }
 
 type app struct {
-	RTMP              *rtmp    `yaml:"rtmp"`
-	HTTP_FLV          *httpFlv `yaml:"http-flv"`
-	IM                *im      `yaml:"im"`
-	PublicAddrMapping string   `yaml:"addr-mapping"` // public mapping private. text,go,http,lua
+	RTMP              *rtmp  `yaml:"rtmp"`
+	HTTP              *http  `yaml:"http"`
+	PublicAddrMapping string `yaml:"addr-mapping"` // public mapping private. text,go,http,lua
 }
 
 // Rtmp only allow publisher live streaming.
@@ -37,6 +36,11 @@ type rtmp struct {
 	AppName     string   `yaml:"app-name"`
 	AccessPath  []string `yaml:"access-path"`
 	AccessCheck []string `yaml:"access-check"` // callback method.
+}
+
+type http struct {
+	Flv *httpFlv `yaml:"flv"`
+	Im  *im      `yaml:"im"`
 }
 
 // HTTP-FLV only can support to play live streaming.
