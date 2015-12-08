@@ -74,7 +74,8 @@ func (gl *GoLua) LoadFile(path string) error {
 }
 
 func (gl *GoLua) Close() error {
-	return gl.Close()
+	gl.l.Close()
+	return nil
 }
 
 func goToLua(i interface{}) (v lua.LValue) {

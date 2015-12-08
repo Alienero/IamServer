@@ -12,29 +12,11 @@ package lua
 
 import (
 	"testing"
-
-	"github.com/yuin/gopher-lua"
 )
-
-func TestLua(t *testing.T) {
-	file := `
-	function f(num1,num2)
-		print(num1,num2)
-	end
-	`
-	L := lua.NewState()
-	L.DoString(file)
-	if err := L.CallByParam(lua.P{
-		Fn:      L.GetGlobal("f"),
-		NRet:    0,
-		Protect: true,
-	}, lua.LNumber(10), lua.LNumber(2314)); err != nil {
-		panic(err)
-	}
-}
 
 func TestCall(t *testing.T) {
 	gl := NewGolua()
+	defer gl.Close()
 	if err := gl.Load(`
 		i = 3
 		function f()
@@ -60,4 +42,19 @@ func TestCall(t *testing.T) {
 		}
 		t.Logf("len:%v, ret[0]=%v", len(rets), GetString(rets[0]))
 	}
+}
+
+func TestLuaLocal(t *testing.T) {
+	l1 := `
+	local a = 3
+	b = true
+	`
+	l2 := `
+	print(a)
+	print(b)
+	`
+	gl := NewGolua()
+	defer gl.Close()
+	gl.Load(l1)
+	gl.Load(l2)
 }

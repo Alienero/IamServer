@@ -19,20 +19,20 @@ import (
 
 // App
 type AppMapping interface {
-	AddrMapping(public string) (private string)
+	AddrMapping(public string) (private string, err error)
 }
 
 // RTMP
 type RTMP interface {
-	AccessCheck(conn net.Conn, appname, path string) bool
+	AccessCheck(conn net.Conn, appname, path string) (bool, error)
 }
 
 // HTTP-FLV
 type FLV interface {
-	AccessCheck(r *http.Request) bool
+	AccessCheck(r *http.Request) (bool, error)
 }
 
 // IM
 type IM interface {
-	AccessCheck(ws *websocket.Conn) bool
+	AccessCheck(ws *websocket.Conn) (bool, error)
 }

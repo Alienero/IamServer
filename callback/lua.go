@@ -11,9 +11,45 @@
 package callback
 
 import (
-	"github.com/yuin/gopher-lua"
+	"github.com/Alienero/IamServer/lua"
+)
+
+const (
+	AddrMappingFn = "addr_mapping"
 )
 
 // Lua.
-type LuaMapping struct {
+type Lua struct {
+	gl        *lua.GoLua
+	mappingFn *lua.Fn
+}
+
+func NewLua() *Lua {
+	return &Lua{
+		gl: lua.NewGolua(),
+	}
+}
+
+func (l *Lua) Load(source string) error {
+	return l.gl.Load(source)
+}
+
+func (l *Lua) SetAddrMappingFn() {
+	l.mappingFn = l.gl.GetCallParam(AddrMappingFn, 1)
+}
+
+func (l *Lua) LoadFile(path string) error {
+	return l.gl.LoadFile(path)
+}
+
+func (l *Lua) AddrMapping(public string) (private string, err error) {
+	rets, err := l.gl.Call(l.mappingFn, public)
+	if err != nil {
+		return "", err
+	}
+	return lua.GetString(rets[0]), err
+}
+
+func (l *Lua) Close() error {
+	return l.gl.Close()
 }
