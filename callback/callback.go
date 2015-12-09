@@ -24,15 +24,15 @@ type AppMapping interface {
 
 // RTMP
 type RTMP interface {
-	AccessCheck(conn net.Conn, appname, path string) (bool, error)
+	RtmpAccessCheck(conn net.Conn, appname, path string) (bool, error)
 }
 
 // HTTP-FLV
 type FLV interface {
-	AccessCheck(r *http.Request) (bool, error)
+	FlvAccessCheck(r *http.Request) (bool, error)
 }
 
 // IM
 type IM interface {
-	AccessCheck(ws *websocket.Conn) (bool, error)
+	IMAccessCheck(ws *websocket.Conn) (bool, error)
 }

@@ -78,8 +78,11 @@ func (gl *GoLua) Close() error {
 	return nil
 }
 
+var table = reflect.TypeOf(new(Table))
+
 func goToLua(i interface{}) (v lua.LValue) {
-	kind := reflect.TypeOf(i).Kind()
+	t := reflect.TypeOf(i)
+	kind := t.Kind()
 	switch {
 	case kind == reflect.Bool:
 		v = lua.LBool(i.(bool))
@@ -87,7 +90,11 @@ func goToLua(i interface{}) (v lua.LValue) {
 		v = lua.LNumber(i.(float64))
 	case kind == reflect.String:
 		v = lua.LString(i.(string))
-
+	case kind == reflect.Ptr && t == table:
+		// this case only for lua table.
+		v = i.(*Table).m
+	default:
+		panic("unknow type.")
 	}
 	return
 }
@@ -102,4 +109,35 @@ func GetNumber(lv interface{}) float64 {
 
 func GetBool(lv interface{}) bool {
 	return bool(lv.(lua.LBool))
+}
+
+func GetTable(lv interface{}) *Table {
+	return newTable(lv.(*lua.LTable))
+}
+
+// Lua table.
+type Table struct {
+	m *lua.LTable
+}
+
+func NewTalbe() *Table {
+	return newTable(new(lua.LTable))
+}
+
+func newTable(m *lua.LTable) *Table {
+	return &Table{
+		m: m,
+	}
+}
+
+func (t *Table) Get(key interface{}) interface{} {
+	return t.m.RawGetH(goToLua(key))
+}
+
+func (t *Table) Set(key, value interface{}) {
+	t.m.RawSetH(goToLua(key), goToLua(value))
+}
+
+func (t *Table) Del(key interface{}) {
+	t.m.RawSetH(goToLua(key), nil)
 }

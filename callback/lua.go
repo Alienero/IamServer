@@ -11,11 +11,16 @@
 package callback
 
 import (
+	"net"
+
 	"github.com/Alienero/IamServer/lua"
 )
 
 const (
-	AddrMappingFn = "addr_mapping"
+	AddrMappingFn   = "addr_mapping"
+	RTMPAccessCheck = "rtmp_access_check"
+	FlvAccessCheck  = "flv_access_check"
+	IMAccessCheck   = "im_access_check"
 )
 
 // Lua.
@@ -48,6 +53,9 @@ func (l *Lua) AddrMapping(public string) (private string, err error) {
 		return "", err
 	}
 	return lua.GetString(rets[0]), err
+}
+
+func (l *Lua) RtmpAccessCheck(conn net.Conn, appname, path string) (bool, error) {
 }
 
 func (l *Lua) Close() error {

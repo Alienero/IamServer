@@ -58,3 +58,50 @@ func TestLuaLocal(t *testing.T) {
 	gl.Load(l1)
 	gl.Load(l2)
 }
+
+func TestLuaSame(t *testing.T) {
+	l1 := `
+	function a()
+		print("first")
+	end
+
+	function a()
+		print("second")
+	end
+
+	a()
+	`
+	gl := NewGolua()
+	defer gl.Close()
+	if err := gl.Load(l1); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestLuaTable(t *testing.T) {
+	l := `
+	function f(a) 
+		temp = a["remote_addr"]
+		print(temp)
+		return a
+	end
+	`
+	gl := NewGolua()
+	defer gl.Close()
+	if err := gl.Load(l); err != nil {
+		t.Error(err)
+	}
+	table := NewTalbe()
+	table.Set("remote_addr", "ilulu.xyz")
+	fn := gl.GetCallParam("f", 1)
+	rets, err := gl.Call(fn, table)
+	if err != nil {
+		t.Error(err)
+	}
+	ret := GetString(GetTable(rets[0]).Get("remote_addr"))
+	if ret != "ilulu.xyz" {
+		t.Error("ne")
+	} else {
+		t.Log(ret)
+	}
+}
