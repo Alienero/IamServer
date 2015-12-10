@@ -11,7 +11,6 @@
 package callback
 
 import (
-	"net"
 	"net/http"
 	"net/url"
 
@@ -31,7 +30,7 @@ type Lua struct {
 	mappingFn       *lua.Fn
 	rtmpAccessCheck *lua.Fn
 	flvAccessCheck  *lua.Fn
-	IMAccessCheck   *lua.Fn
+	imAccessCheck   *lua.Fn
 }
 
 func NewLua() *Lua {
@@ -61,7 +60,7 @@ func (l *Lua) SetFlvAccessCheck() {
 }
 
 func (l *Lua) SetIMAccessCheck() {
-	l.IMAccessCheck = l.gl.GetCallParam(IMAccessCheck, 1)
+	l.imAccessCheck = l.gl.GetCallParam(IMAccessCheck, 1)
 }
 
 func (l *Lua) AddrMapping(public string) (private string, err error) {
@@ -69,7 +68,7 @@ func (l *Lua) AddrMapping(public string) (private string, err error) {
 	if err != nil {
 		return "", err
 	}
-	return lua.GetString(rets[0]), err
+	return lua.GetString(rets[0]), nil
 }
 
 func (l *Lua) RtmpAccessCheck(remote, local, appname, path string) (bool, error) {
@@ -80,11 +79,48 @@ func (l *Lua) RtmpAccessCheck(remote, local, appname, path string) (bool, error)
 	return lua.GetBool(rets[0]), nil
 }
 
+// remote: remote address, url: HTTP request URL
 func (l *Lua) FlvAccessCheck(remote, url, path string, form url.Values, cookies []*http.Cookie) (bool, error) {
 	fms := lua.NewTalbe()
+	for k, rs := range form {
+		slice := lua.NewTalbe()
+		slice.Append(rs)
+		fms.Set(k, slice)
+	}
+	cs := lua.NewTalbe()
+	for n, cookie := range cookies {
+		c := lua.NewTalbe()
+		c.Set("name", cookie.Name)
+		c.Set("value", cookie.Value)
+		cs.SetInt(n, c)
+	}
+	rets, err := l.gl.Call(l.flvAccessCheck, remote, url, path, fms, cs)
+	if err != nil {
+		return false, err
+	}
+	return lua.GetBool(rets[0]), nil
+}
 
-	rets, err := l.gl.Call(l.flvAccessCheck, remote, url)
-
+// remote: remote address, url: HTTP request URL
+func (l *Lua) IMAccessCheck(remote, url, path string, form url.Values, cookies []*http.Cookie) (bool, error) {
+	fms := lua.NewTalbe()
+	for k, rs := range form {
+		slice := lua.NewTalbe()
+		slice.Append(rs)
+		fms.Set(k, slice)
+	}
+	cs := lua.NewTalbe()
+	for n, cookie := range cookies {
+		c := lua.NewTalbe()
+		c.Set("name", cookie.Name)
+		c.Set("value", cookie.Value)
+		cs.SetInt(n, c)
+	}
+	rets, err := l.gl.Call(l.imAccessCheck, remote, url, path, fms, cs)
+	if err != nil {
+		return false, err
+	}
+	return lua.GetBool(rets[0]), nil
 }
 
 func (l *Lua) Close() error {

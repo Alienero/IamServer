@@ -12,6 +12,8 @@ package lua
 
 import (
 	"testing"
+
+	"github.com/yuin/gopher-lua"
 )
 
 func TestCall(t *testing.T) {
@@ -187,4 +189,28 @@ func TestAppendSlice(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+}
+
+func TestTwiceCall(t *testing.T) {
+	l := `
+	mapping = {["123"]="456",["2"]="hello"}
+	function addr_mapping(public)
+		return mapping[public]
+	end
+	`
+	L := lua.NewState()
+	L.DoString(l)
+	L.CallByParam(lua.P{
+		Fn:      L.GetGlobal("addr_mapping"),
+		NRet:    1,
+		Protect: true,
+	}, lua.LString("123"))
+	t.Log(L.Get(1).String(), L.Get(2).String())
+	L.Pop(1) // must pop.
+	L.CallByParam(lua.P{
+		Fn:      L.GetGlobal("addr_mapping"),
+		NRet:    1,
+		Protect: true,
+	}, lua.LString("2"))
+	t.Log(L.Get(1).String(), L.GetTop())
 }

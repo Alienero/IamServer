@@ -40,6 +40,10 @@ func (gl *GoLua) Call(fn *Fn, args ...interface{}) (ret []interface{}, err error
 	for i := 0; i < fn.p.NRet; i++ {
 		ret[i] = gl.l.Get(i + 1)
 	}
+	l := len(ret)
+	if l > 0 {
+		gl.l.Pop(l)
+	}
 	return
 }
 
@@ -100,20 +104,46 @@ func goToLua(i interface{}) (v lua.LValue) {
 	return
 }
 
+var luaNil = reflect.TypeOf(lua.LNil)
+
+func isLuaNil(v interface{}) bool {
+	if reflect.TypeOf(v) == luaNil {
+		return true
+	} else {
+		return false
+	}
+}
+
 func GetString(lv interface{}) string {
-	return string(lv.(lua.LString))
+	if isLuaNil(lv) {
+		return ""
+	} else {
+		return string(lv.(lua.LString))
+	}
 }
 
 func GetNumber(lv interface{}) float64 {
-	return float64(lv.(lua.LNumber))
+	if isLuaNil(lv) {
+		return 0
+	} else {
+		return float64(lv.(lua.LNumber))
+	}
 }
 
 func GetBool(lv interface{}) bool {
-	return bool(lv.(lua.LBool))
+	if isLuaNil(lv) {
+		return false
+	} else {
+		return bool(lv.(lua.LBool))
+	}
 }
 
 func GetTable(lv interface{}) *Table {
-	return newTable(lv.(*lua.LTable))
+	if isLuaNil(lv) {
+		return nil
+	} else {
+		return newTable(lv.(*lua.LTable))
+	}
 }
 
 // Lua table.
