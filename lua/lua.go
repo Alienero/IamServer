@@ -33,12 +33,13 @@ func (gl *GoLua) Call(fn *Fn, args ...interface{}) (ret []interface{}, err error
 	for n, arg := range args {
 		vs[n] = goToLua(arg)
 	}
+	last := gl.l.GetTop()
 	if err = gl.l.CallByParam(fn.p, vs...); err != nil {
 		return nil, err
 	}
 	ret = make([]interface{}, fn.p.NRet)
 	for i := 0; i < fn.p.NRet; i++ {
-		ret[i] = gl.l.Get(i + 1)
+		ret[i] = gl.l.Get(i + last + 1)
 	}
 	l := len(ret)
 	if l > 0 {
