@@ -166,7 +166,7 @@ func TestNestTable(t *testing.T) {
 func TestAppendSlice(t *testing.T) {
 	arry := NewTalbe()
 	i := []float64{1, 2, 3, 4, 5, 6, 7}
-	arry.AppendSlice(i)
+	arry.Append(i)
 	l := `
 	function f(array)
 		print("----------------Print Array--------------")

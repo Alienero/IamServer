@@ -151,7 +151,7 @@ func (t *Table) GetInt(index int) lua.LValue {
 	return t.m.RawGetInt(index)
 }
 
-func (t *Table) AppendSlice(vs ...interface{}) {
+func (t *Table) Append(vs ...interface{}) {
 	index := t.m.Len()
 	if index > 0 {
 		index--
