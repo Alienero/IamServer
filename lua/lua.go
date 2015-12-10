@@ -80,6 +80,7 @@ func (gl *GoLua) Close() error {
 
 var table = reflect.TypeOf(new(Table))
 
+// only support number float64
 func goToLua(i interface{}) (v lua.LValue) {
 	t := reflect.TypeOf(i)
 	kind := t.Kind()
@@ -140,4 +141,40 @@ func (t *Table) Set(key, value interface{}) {
 
 func (t *Table) Del(key interface{}) {
 	t.m.RawSetH(goToLua(key), nil)
+}
+
+func (t *Table) SetInt(index int, value interface{}) {
+	t.m.RawSetInt(index, goToLua(value))
+}
+
+func (t *Table) GetInt(index int) lua.LValue {
+	return t.m.RawGetInt(index)
+}
+
+func (t *Table) AppendSlice(vs ...interface{}) {
+	index := t.m.Len()
+	if index > 0 {
+		index--
+	}
+	for _, v := range vs {
+		switch v.(type) {
+		case []float64:
+			for _, f := range v.([]float64) {
+				t.SetInt(index, f)
+				index++
+			}
+		case []string:
+			for _, s := range v.([]string) {
+				t.SetInt(index, s)
+				index++
+			}
+		default:
+			t.SetInt(index, v)
+			index++
+		}
+	}
+}
+
+func (t *Table) Len() int {
+	return t.m.Len()
 }

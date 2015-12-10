@@ -24,6 +24,7 @@ type configuration struct {
 }
 
 type app struct {
+	Name              string `yaml:"name"`
 	RTMP              *rtmp  `yaml:"rtmp"`
 	HTTP              *http  `yaml:"http"`
 	PublicAddrMapping string `yaml:"addr-mapping"` // public mapping private. text,go,http,lua

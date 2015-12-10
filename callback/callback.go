@@ -24,7 +24,7 @@ type AppMapping interface {
 
 // RTMP
 type RTMP interface {
-	RtmpAccessCheck(conn net.Conn, appname, path string) (bool, error)
+	RtmpAccessCheck(remote, local, appname, path string) (bool, error)
 }
 
 // HTTP-FLV

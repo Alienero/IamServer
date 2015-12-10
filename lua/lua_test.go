@@ -105,3 +105,86 @@ func TestLuaTable(t *testing.T) {
 		t.Log(ret)
 	}
 }
+
+func TestLuaArray(t *testing.T) {
+	arry := NewTalbe()
+	i := []float64{1, 2, 3, 4, 5, 6, 7}
+	for n, v := range i {
+		arry.SetInt(n, v)
+	}
+	l := `
+	function f(arry)
+		for i=0,6 do
+			print(i)
+		end
+	end
+	`
+	gl := NewGolua()
+	defer gl.Close()
+	if err := gl.Load(l); err != nil {
+		t.Error(err)
+	}
+	fn := gl.GetCallParam("f", 0)
+	_, err := gl.Call(fn, arry)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestNestTable(t *testing.T) {
+	arryOut := NewTalbe()
+	arryIn := NewTalbe()
+	i := []float64{1, 2, 3, 4, 5, 6, 7}
+	for n, v := range i {
+		arryIn.SetInt(n, v)
+	}
+	arryOut.SetInt(0, arryIn)
+	arryOut.SetInt(1, arryIn)
+
+	l := `
+	function f(arry)
+		for i=0,1 do
+			for j = 0,6 do
+				io.write(arry[i][j])
+			end
+			print()
+		end
+	end
+	`
+	gl := NewGolua()
+	defer gl.Close()
+	if err := gl.Load(l); err != nil {
+		t.Error(err)
+	}
+	fn := gl.GetCallParam("f", 0)
+	_, err := gl.Call(fn, arryOut)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestAppendSlice(t *testing.T) {
+	arry := NewTalbe()
+	i := []float64{1, 2, 3, 4, 5, 6, 7}
+	arry.AppendSlice(i)
+	l := `
+	function f(array)
+		print("----------------Print Array--------------")
+		for i=0,6 do
+			io.write(array[i])
+		end
+		print()
+		print("----------------Print Done--------------")
+	end
+	`
+	gl := NewGolua()
+	defer gl.Close()
+	if err := gl.Load(l); err != nil {
+		t.Error(err)
+	}
+	fn := gl.GetCallParam("f", 0)
+	_, err := gl.Call(fn, arry)
+	if err != nil {
+		t.Error(err)
+	}
+}
