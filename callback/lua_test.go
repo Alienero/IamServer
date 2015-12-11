@@ -11,38 +11,73 @@
 package callback
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
-func TestAddrMapping(t *testing.T) {
-	lua := NewLua()
-	defer lua.Close()
-	if err := lua.Load(`
-		-- addr-mapping
-		mapping = {["123"]="456"}
-		function addr_mapping(public)
-			return mapping[public]
-		end
-		`); err != nil {
-		t.Error(err)
-	}
-	lua.SetAddrMappingFn()
+var L = NewLua()
 
-	if private, err := lua.AddrMapping("123"); private != "456" {
-		if err != nil {
-			t.Error(err)
-		}
-		t.Error("ne", private)
-	} else {
-		t.Log("ok")
-	}
+func TestLuaInit(t *testing.T) {
+	gopath := os.Getenv("GOPATH")
+	t.Logf("GOPATH:%v", gopath)
+	L.SetLuaPath(filepath.Join(gopath, "/src/github.com/Alienero/IamServer/test/lua/"))
+	L.InitCallBackModule()
 
-	if private, err := lua.AddrMapping("test"); private != "" {
-		if err != nil {
-			t.Error(err)
-		}
-		t.Error("ne", private)
+	// load callback method
+	L.SetAddrMappingFn()
+	L.SetRtmpAccessCheck()
+	L.SetFlvAccessCheck()
+	L.SetIMAccessCheck()
+}
+
+func TestMapping(t *testing.T) {
+	if private := L.AddrMapping(""); private != "master" {
+		t.Errorf("ne:%v", "master")
 	} else {
-		t.Log("ok")
+		t.Log(private)
+	}
+	fmt.Println("===")
+	if private := L.AddrMapping("master"); private != "master" {
+		t.Errorf("ne:%v", "master")
+	} else {
+		t.Log(private)
+	}
+	fmt.Println("===")
+	if private := L.AddrMapping("blank"); private != "" {
+		t.Errorf("ne:%v", "blank")
+	} else {
+		t.Log(private)
+	}
+}
+
+func TestRtmpCheck(t *testing.T) {
+	if ok := L.RtmpAccessCheck("ilulu.xyz:9009", "localhost", "live", "master"); !ok {
+		t.Error("ne")
+	}
+	fmt.Println("===")
+	if ok := L.RtmpAccessCheck("ilulu.xyz:9009", "localhost", "", ""); ok {
+		t.Error("ne")
+	}
+}
+
+func TestFlvCheck(t *testing.T) {
+	if ok := L.FlvAccessCheck("ilulu.xyz:9009", "http://ilulu.xyz:9009", "/live/master", nil, nil); !ok {
+		t.Error("ne")
+	}
+	fmt.Println("===")
+	if ok := L.FlvAccessCheck("ilulu.xyz:9009", "http://ilulu.xyz:9009", "/live", nil, nil); ok {
+		t.Error("ne")
+	}
+}
+
+func TestIMCheck(t *testing.T) {
+	if ok := L.IMAccessCheck("ilulu.xyz:9009", "http://ilulu.xyz:9009", "/im/master", nil, nil); !ok {
+		t.Error("ne")
+	}
+	fmt.Println("===")
+	if ok := L.IMAccessCheck("ilulu.xyz:9009", "http://ilulu.xyz:9009", "/im/live", nil, nil); ok {
+		t.Error("ne")
 	}
 }

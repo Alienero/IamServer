@@ -18,6 +18,7 @@ import (
 )
 
 const (
+	CallBackModule  = "callback"
 	AddrMappingFn   = "addr_mapping"
 	RTMPAccessCheck = "rtmp_access_check"
 	FlvAccessCheck  = "flv_access_check"
@@ -31,12 +32,21 @@ type Lua struct {
 	rtmpAccessCheck *lua.Fn
 	flvAccessCheck  *lua.Fn
 	imAccessCheck   *lua.Fn
+	callBackModule  *lua.Table
 }
 
 func NewLua() *Lua {
 	return &Lua{
 		gl: lua.NewGolua(),
 	}
+}
+
+func (l *Lua) SetLuaPath(path string) {
+	l.gl.SetLuaPath(path)
+}
+
+func (l *Lua) InitCallBackModule() {
+	l.callBackModule = l.gl.GetModule(CallBackModule)
 }
 
 func (l *Lua) Load(source string) error {
@@ -48,39 +58,39 @@ func (l *Lua) LoadFile(path string) error {
 }
 
 func (l *Lua) SetAddrMappingFn() {
-	l.mappingFn = l.gl.GetCallParam(AddrMappingFn, 1)
+	l.mappingFn = l.gl.GetCallParamWithFn(l.callBackModule.Get(AddrMappingFn), 1)
 }
 
 func (l *Lua) SetRtmpAccessCheck() {
-	l.rtmpAccessCheck = l.gl.GetCallParam(RTMPAccessCheck, 1)
+	l.rtmpAccessCheck = l.gl.GetCallParamWithFn(l.callBackModule.Get(RTMPAccessCheck), 1)
 }
 
 func (l *Lua) SetFlvAccessCheck() {
-	l.flvAccessCheck = l.gl.GetCallParam(FlvAccessCheck, 1)
+	l.flvAccessCheck = l.gl.GetCallParamWithFn(l.callBackModule.Get(FlvAccessCheck), 1)
 }
 
 func (l *Lua) SetIMAccessCheck() {
-	l.imAccessCheck = l.gl.GetCallParam(IMAccessCheck, 1)
+	l.imAccessCheck = l.gl.GetCallParamWithFn(l.callBackModule.Get(IMAccessCheck), 1)
 }
 
-func (l *Lua) AddrMapping(public string) (private string, err error) {
+func (l *Lua) AddrMapping(public string) (private string) {
 	rets, err := l.gl.Call(l.mappingFn, public)
 	if err != nil {
-		return "", err
+		panic(err)
 	}
-	return lua.GetString(rets[0]), nil
+	return lua.GetString(rets[0])
 }
 
-func (l *Lua) RtmpAccessCheck(remote, local, appname, path string) (bool, error) {
+func (l *Lua) RtmpAccessCheck(remote, local, appname, path string) bool {
 	rets, err := l.gl.Call(l.rtmpAccessCheck, remote, local, appname, path)
 	if err != nil {
-		return false, err
+		panic(err)
 	}
-	return lua.GetBool(rets[0]), nil
+	return lua.GetBool(rets[0])
 }
 
 // remote: remote address, url: HTTP request URL
-func (l *Lua) FlvAccessCheck(remote, url, path string, form url.Values, cookies []*http.Cookie) (bool, error) {
+func (l *Lua) FlvAccessCheck(remote, url, path string, form url.Values, cookies []*http.Cookie) bool {
 	fms := lua.NewTalbe()
 	for k, rs := range form {
 		slice := lua.NewTalbe()
@@ -96,13 +106,13 @@ func (l *Lua) FlvAccessCheck(remote, url, path string, form url.Values, cookies 
 	}
 	rets, err := l.gl.Call(l.flvAccessCheck, remote, url, path, fms, cs)
 	if err != nil {
-		return false, err
+		panic(err)
 	}
-	return lua.GetBool(rets[0]), nil
+	return lua.GetBool(rets[0])
 }
 
 // remote: remote address, url: HTTP request URL
-func (l *Lua) IMAccessCheck(remote, url, path string, form url.Values, cookies []*http.Cookie) (bool, error) {
+func (l *Lua) IMAccessCheck(remote, url, path string, form url.Values, cookies []*http.Cookie) bool {
 	fms := lua.NewTalbe()
 	for k, rs := range form {
 		slice := lua.NewTalbe()
@@ -118,9 +128,9 @@ func (l *Lua) IMAccessCheck(remote, url, path string, form url.Values, cookies [
 	}
 	rets, err := l.gl.Call(l.imAccessCheck, remote, url, path, fms, cs)
 	if err != nil {
-		return false, err
+		return false
 	}
-	return lua.GetBool(rets[0]), nil
+	return lua.GetBool(rets[0])
 }
 
 func (l *Lua) Close() error {

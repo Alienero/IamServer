@@ -214,3 +214,27 @@ func TestTwiceCall(t *testing.T) {
 	}, lua.LString("2"))
 	t.Log(L.Get(1).String(), L.GetTop())
 }
+
+func TestModuleFn(t *testing.T) {
+	l := `
+	test = {}
+	function test.f()
+		print("ok")
+	end
+	return test
+	`
+	L := lua.NewState()
+	if err := L.DoString(l); err != nil {
+		t.Log(err)
+	}
+	t.Log(L.GetTop())
+	module := L.Get(-1).(*lua.LTable)
+
+	if err := L.CallByParam(lua.P{
+		Fn:      module.RawGet(lua.LString("f")),
+		NRet:    0,
+		Protect: true,
+	}); err != nil {
+		t.Error(err)
+	}
+}

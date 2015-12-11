@@ -13,18 +13,40 @@ package lua
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"reflect"
 
 	"github.com/yuin/gopher-lua"
 )
 
 type GoLua struct {
-	l *lua.LState
+	l           *lua.LState
+	luaPath     string
+	luaPathDir  string
+	moduleCache map[string]*Table
 }
 
 func NewGolua() *GoLua {
-	return &GoLua{
-		l: lua.NewState(),
+	L := lua.NewState()
+	gl := &GoLua{
+		l:           L,
+		moduleCache: make(map[string]*Table),
+	}
+	_getscriptdir := func(L *lua.LState) int {
+		L.Push(lua.LString(gl.luaPath))
+		return 1
+	}
+	gl.l.SetGlobal("_getscriptdir", gl.l.NewFunction(_getscriptdir))
+	return gl
+}
+
+func (gl *GoLua) SetLuaPath(path string) {
+	gl.luaPathDir = path
+	gl.luaPath = filepath.Join(path, "?.lua")
+	if err := gl.l.DoString(`
+		package.path = _getscriptdir() .. package.path
+		`); err != nil {
+		panic(err)
 	}
 }
 
@@ -52,6 +74,16 @@ type Fn struct {
 	p lua.P
 }
 
+func (gl *GoLua) GetCallParamWithFn(fn interface{}, nret int) *Fn {
+	return &Fn{
+		lua.P{
+			Fn:      fn.(*lua.LFunction),
+			NRet:    nret,
+			Protect: true,
+		},
+	}
+}
+
 func (gl *GoLua) GetCallParam(fn string, nret int) *Fn {
 	return &Fn{
 		lua.P{
@@ -59,6 +91,25 @@ func (gl *GoLua) GetCallParam(fn string, nret int) *Fn {
 			NRet:    nret,
 			Protect: true,
 		},
+	}
+}
+
+func (gl *GoLua) GetModule(module string) *Table {
+	if t, ok := gl.moduleCache[module]; ok {
+		return t
+	} else {
+		top := gl.l.GetTop()
+		if err := gl.l.DoFile(filepath.Join(gl.luaPathDir, module+".lua")); err != nil {
+			panic(err)
+		}
+		ret := gl.l.Get(-1)
+		pop := gl.l.GetTop() - top
+		if pop > 0 {
+			gl.l.Pop(pop)
+		}
+		m := newTable(ret.(*lua.LTable))
+		gl.moduleCache[module] = m
+		return m
 	}
 }
 
