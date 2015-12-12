@@ -54,7 +54,7 @@ func (server *IMServer) Init() {
 }
 
 func (server *IMServer) handle(ws *websocket.Conn) {
-	consumer := NewConsumer(ws)
+	consumer := NewConsumer(server, ws)
 	// check room_id.
 	r := server.Rm.Get(consumer.room)
 	if r == nil {
@@ -63,7 +63,7 @@ func (server *IMServer) handle(ws *websocket.Conn) {
 		return
 	}
 	// check user.
-	user, ok := GlobalIM.Rm.Check(consumer)
+	user, ok := server.Rm.Check(consumer)
 	if !ok {
 		consumer.Close()
 		return
@@ -231,13 +231,14 @@ func (r *Room) Close() error {
 }
 
 type Consumer struct {
-	name     string // user name.
-	id       uint64 // session id.
-	room     string // room id.
-	typ      byte
-	access   byte
-	r        *Room
-	isClosed bool
+	serverTyp byte
+	name      string // user name.
+	id        uint64 // session id.
+	room      string // room id.
+	typ       byte
+	access    byte
+	r         *Room
+	isClosed  bool
 
 	sync.RWMutex
 
@@ -254,7 +255,7 @@ type msg struct {
 	Playload string `json:"playload"`
 }
 
-func NewConsumer(ws *websocket.Conn) *Consumer {
+func NewConsumer(server *IMServer, ws *websocket.Conn) *Consumer {
 	// how to get name.
 	// two method:
 	// 		1.user session.
@@ -262,10 +263,11 @@ func NewConsumer(ws *websocket.Conn) *Consumer {
 	rid := ws.Request().FormValue("room_id")
 	glog.Infof("im ws server got room_id:%v", rid)
 	return &Consumer{
-		id:        GlobalIM.Rm.GetID(),
+		id:        server.Rm.GetID(),
 		room:      rid,
 		conn:      ws,
 		writeChan: make(chan *msg, MaxCache),
+		serverTyp: server.Rm.typ,
 	}
 }
 
@@ -295,7 +297,7 @@ func (c *Consumer) readLoop(stop chan struct{}) (err error) {
 			// drop msg.
 			continue
 		}
-		if c.name == "some bird" && m.User != "" && GlobalIM.Rm.typ == Single {
+		if c.name == "some bird" && m.User != "" && c.serverTyp == Single {
 			c.name = html.EscapeString(m.User)
 		}
 		m.User = c.name

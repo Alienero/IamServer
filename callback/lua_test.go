@@ -15,9 +15,11 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/Alienero/IamServer/lua"
 )
 
-var L = NewLua()
+var L = NewLua(lua.NewGolua())
 
 func TestLuaInit(t *testing.T) {
 	gopath := os.Getenv("GOPATH")

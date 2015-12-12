@@ -28,6 +28,7 @@ type app struct {
 	RTMP              *rtmp  `yaml:"rtmp"`
 	HTTP              *http  `yaml:"http"`
 	PublicAddrMapping string `yaml:"addr-mapping"` // public mapping private. text,go,http,lua
+	LuaPath           string `yaml:"lua-path"`
 }
 
 // Rtmp only allow publisher live streaming.

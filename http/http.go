@@ -23,7 +23,7 @@ import (
 	"github.com/golang/glog"
 )
 
-func InitHTTP(sources *source.SourceManage) error {
+func InitHTTP(mux *http.ServeMux, sources *source.SourceManage, imServer *im.IMServer) error {
 	tmpl, err := template.ParseFiles("../play.tpl")
 	if err != nil {
 		glog.Fatal("parse template error:", err)
@@ -35,7 +35,7 @@ func InitHTTP(sources *source.SourceManage) error {
 		if rid == "" {
 			rid = "master"
 		}
-		rm := im.GlobalIM.Rm.Get(rid)
+		rm := imServer.Rm.Get(rid)
 		if rm == nil {
 			user.LiveCount = 0
 		} else {
@@ -45,14 +45,14 @@ func InitHTTP(sources *source.SourceManage) error {
 			glog.Error(err)
 		}
 	}
-	http.HandleFunc("/index.html", index)
-	http.HandleFunc("/count", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/index.html", index)
+	mux.HandleFunc("/count", func(w http.ResponseWriter, r *http.Request) {
 		user := monitor.Monitor.GetTempInfo()
 		rid := r.FormValue("room_id")
 		if rid == "" {
 			rid = "master"
 		}
-		rm := im.GlobalIM.Rm.Get(rid)
+		rm := imServer.Rm.Get(rid)
 		if rm == nil {
 			user.LiveCount = 0
 		} else {
@@ -66,7 +66,7 @@ func InitHTTP(sources *source.SourceManage) error {
 		w.Write(data)
 	})
 	var fileServer = http.FileServer(http.Dir("../"))
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
 			index(w, r)
 		} else {
@@ -76,8 +76,8 @@ func InitHTTP(sources *source.SourceManage) error {
 	return nil
 }
 
-func InitHTTPFlv(app string, sources *source.SourceManage, mapping callback.AppMapping) {
-	http.HandleFunc("/"+app, func(w http.ResponseWriter, r *http.Request) {
+func InitHTTPFlv(mux *http.ServeMux, app string, sources *source.SourceManage, mapping callback.AppMapping) {
+	mux.HandleFunc("/"+app, func(w http.ResponseWriter, r *http.Request) {
 		glog.Info("http: get an request.", r.RequestURI, r.Method)
 		if r.Method != "GET" {
 			return

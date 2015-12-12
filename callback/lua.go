@@ -35,9 +35,9 @@ type Lua struct {
 	callBackModule  *lua.Table
 }
 
-func NewLua() *Lua {
+func NewLua(gl *lua.GoLua) *Lua {
 	return &Lua{
-		gl: lua.NewGolua(),
+		gl: gl,
 	}
 }
 
