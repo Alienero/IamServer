@@ -13,11 +13,9 @@ package server
 import (
 	"fmt"
 	"net"
-	"runtime"
 
 	"github.com/Alienero/IamServer/callback"
 	"github.com/Alienero/IamServer/im"
-	"github.com/Alienero/IamServer/rtmp"
 	"github.com/Alienero/IamServer/source"
 
 	"github.com/golang/glog"
@@ -42,21 +40,6 @@ func NewSrsServer(addr string, cb callback.RTMP, sources *source.SourceManage,
 		enbleIM:  enbleIM,
 		imServer: imServer,
 	}
-}
-
-func (r *SrsServer) PrintInfo() {
-	fmt.Println(`Powered by
-	      ___ _           _ _     _
-	     / __\ | _____  _(_) |__ | | ___
-	    / _\ | |/ _ \ \/ / | '_ \| |/ _ \
-	   / /   | |  __/>  <| | |_) | |  __/
-	   \/    |_|\___/_/\_\_|_.__/|_|\___|
-	   					Team
-
-https://github.com/FlexibleBroadband
-`)
-	glog.Infof("RTMP Protocol Stack:  %v", rtmp.Version)
-	glog.Infof("Will use CPU Num:%v", runtime.NumCPU())
 }
 
 func (r *SrsServer) Serve() error {
