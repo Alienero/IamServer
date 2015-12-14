@@ -19,6 +19,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/Alienero/IamServer/callback"
 	"github.com/Alienero/IamServer/monitor"
 
 	"github.com/golang/glog"
@@ -38,22 +39,28 @@ const (
 )
 
 type IMServer struct {
-	addr string
-	Rm   *RoomsManage
+	Rm *RoomsManage
+	cb callback.IMCallback
 }
 
-func NewIMServer() *IMServer {
+func NewIMServer(cb callback.IMCallback) *IMServer {
 	return &IMServer{
-		Rm: new(RoomsManage),
+		Rm: NewRoomsManage(),
+		cb: cb,
 	}
 }
 
 func (server *IMServer) Init() {
-	server.Rm = NewRoomsManage()
 	http.Handle(IMPath, websocket.Handler(server.handle))
 }
 
 func (server *IMServer) handle(ws *websocket.Conn) {
+	ws.Request().ParseForm()
+	if !server.cb.IMAccessCheck(ws.Request().RemoteAddr, ws.Request().RequestURI, ws.Request().URL.Path,
+		ws.Request().Form, ws.Request().Cookies()) {
+		glog.Info("im access fail.")
+		return
+	}
 	consumer := NewConsumer(server, ws)
 	// check room_id.
 	r := server.Rm.Get(consumer.room)
@@ -264,7 +271,7 @@ func NewConsumer(server *IMServer, ws *websocket.Conn) *Consumer {
 	glog.Infof("im ws server got room_id:%v", rid)
 	return &Consumer{
 		id:        server.Rm.GetID(),
-		room:      rid,
+		room:      server.cb.AddrMapping(rid),
 		conn:      ws,
 		writeChan: make(chan *msg, MaxCache),
 		serverTyp: server.Rm.typ,

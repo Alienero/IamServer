@@ -56,7 +56,8 @@ func InitServer() error {
 			if application.HTTP.Im != nil {
 				enbleIM = true
 				glog.Infof("Load IM serve:%v", n)
-				imServer = im.NewIMServer()
+				imServer = im.NewIMServer(cb)
+				imServer.Init()
 			}
 			// TODO: init play demo.
 		}
@@ -72,8 +73,6 @@ func InitServer() error {
 			// should throws a panic.
 			panic("App not has rtmp.")
 		}
-
-		// TODO: check, wait signal.
 	}
 	return nil
 }
