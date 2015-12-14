@@ -59,7 +59,9 @@ func InitServer() error {
 				imServer = im.NewIMServer(cb)
 				imServer.Init()
 			}
-			// TODO: init play demo.
+			if application.EnbleHTTPDemo {
+				serverHttp.InitHTTP(mux, sources, imServer)
+			}
 		}
 
 		if application.RTMP != nil {
