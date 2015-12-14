@@ -303,8 +303,6 @@ func (r *SrsClient) fmle_publishing(s *source.Sourcer) (err error) {
 }
 
 func (r *SrsClient) process_publish_message(s *source.Sourcer, msg *rtmp.Message) (err error) {
-	// glog.Info("handle msg")
 	s.HandleMsg(msg)
-	// glog.Info("handle msg done")
 	return
 }
