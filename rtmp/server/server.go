@@ -25,12 +25,12 @@ type SrsServer struct {
 	id       uint64
 	addr     string
 	sources  *source.SourceManage
-	cb       callback.RTMP
+	cb       callback.RTMPCallback
 	enbleIM  bool
 	imServer *im.IMServer
 }
 
-func NewSrsServer(addr string, cb callback.RTMP, sources *source.SourceManage,
+func NewSrsServer(addr string, cb callback.RTMPCallback, sources *source.SourceManage,
 	enbleIM bool, imServer *im.IMServer) *SrsServer {
 	return &SrsServer{
 		addr:     addr,

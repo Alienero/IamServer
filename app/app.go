@@ -32,12 +32,12 @@ func InitServer() error {
 		return errors.New("empty app list.")
 	}
 	for n, application := range config.Config.Apps {
-		// first we should to make a source manage.
-		sources := source.NewSourcerManage()
-		// second init a lua.
-		cb := initLua(application.LuaPath)
-
 		var (
+			// first we should to make a source manage.
+			sources = source.NewSourcerManage()
+			// second init a lua.
+			cb = initLua(application.LuaPath)
+
 			enbleIM  bool
 			imServer *im.IMServer
 		)
@@ -56,8 +56,9 @@ func InitServer() error {
 			if application.HTTP.Im != nil {
 				enbleIM = true
 				glog.Infof("Load IM serve:%v", n)
-				imserver = im.NewIMServer()
+				imServer = im.NewIMServer()
 			}
+			// TODO: init play demo.
 		}
 
 		if application.RTMP != nil {
@@ -72,7 +73,7 @@ func InitServer() error {
 			panic("App not has rtmp.")
 		}
 
-		// TODO: check
+		// TODO: check, wait signal.
 	}
 	return nil
 }

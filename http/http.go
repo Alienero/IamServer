@@ -76,14 +76,20 @@ func InitHTTP(mux *http.ServeMux, sources *source.SourceManage, imServer *im.IMS
 	return nil
 }
 
-func InitHTTPFlv(mux *http.ServeMux, app string, sources *source.SourceManage, mapping callback.AppMapping) {
+func InitHTTPFlv(mux *http.ServeMux, app string, sources *source.SourceManage, cb callback.FlvCallback) {
 	mux.HandleFunc("/"+app, func(w http.ResponseWriter, r *http.Request) {
 		glog.Info("http: get an request.", r.RequestURI, r.Method)
 		if r.Method != "GET" {
 			return
 		}
+		r.ParseForm()
+		// access check.
+		if !cb.FlvAccessCheck(r.RemoteAddr, r.RequestURI, r.URL.Path, r.Form, r.Cookies()) {
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
 		// mapping: get the really remote address.
-		key := mapping.AddrMapping(r.URL.Path)
+		key := cb.AddrMapping(r.URL.Path)
 		// get live source.
 		consumer, err := source.NewConsumer(sources, key)
 		if err != nil {

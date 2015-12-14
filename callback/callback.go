@@ -12,8 +12,7 @@ package callback
 
 import (
 	"net/http"
-
-	"golang.org/x/net/websocket"
+	"net/url"
 )
 
 // App
@@ -28,10 +27,24 @@ type RTMP interface {
 
 // HTTP-FLV
 type FLV interface {
-	FlvAccessCheck(r *http.Request) bool
+	FlvAccessCheck(remote, url, path string, form url.Values, cookies []*http.Cookie) bool
 }
 
 // IM
 type IM interface {
-	IMAccessCheck(ws *websocket.Conn) bool
+	IMAccessCheck(remote, url, path string, form url.Values, cookies []*http.Cookie) bool
+}
+
+type FlvCallback interface {
+	AppMapping
+	FLV
+}
+
+type IMCallback interface {
+	AppMapping
+	IM
+}
+
+type RTMPCallback interface {
+	RTMP
 }
