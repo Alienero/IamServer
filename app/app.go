@@ -18,6 +18,7 @@ import (
 	"github.com/Alienero/IamServer/callback"
 	"github.com/Alienero/IamServer/config"
 	serverHttp "github.com/Alienero/IamServer/http"
+	"github.com/Alienero/IamServer/im"
 	"github.com/Alienero/IamServer/lua"
 	rtmpServer "github.com/Alienero/IamServer/rtmp/server"
 	"github.com/Alienero/IamServer/source"
@@ -36,35 +37,42 @@ func InitServer() error {
 		// second init a lua.
 		cb := initLua(application.LuaPath)
 
+		var (
+			enbleIM  bool
+			imServer *im.IMServer
+		)
+
+		// IM & HTTP use one port, by default.
+		if application.HTTP != nil {
+			mux := http.NewServeMux()
+			// start http server listen.
+			for _, addr := range application.HTTP.Listen {
+				go http.ListenAndServe(addr, mux)
+			}
+			if application.HTTP.Flv != nil {
+				glog.Infof("Load HTTP-FLV serve:%v", n)
+				serverHttp.InitHTTPFlv(mux, application.Name, sources, cb)
+			}
+			if application.HTTP.Im != nil {
+				enbleIM = true
+				glog.Infof("Load IM serve:%v", n)
+				imserver = im.NewIMServer()
+			}
+		}
+
 		if application.RTMP != nil {
 			glog.Infof("Load RTMP serve:%v", n)
 			// start rtmp publisher server
 			for _, addr := range application.RTMP.Listen {
-				s := rtmpServer.NewSrsServer(addr, cb, sources)
+				s := rtmpServer.NewSrsServer(addr, cb, sources, enbleIM, imServer)
 				go s.Serve()
 			}
 		} else {
 			// should throws a panic.
 			panic("App not has rtmp.")
 		}
-		// IM & HTTP use one port, by default.
-		if application.HTTP != nil {
-			// TODO: start  HTTP server.
-			mux := http.NewServeMux()
 
-			if application.HTTP.Flv != nil {
-				glog.Infof("Load HTTP-FLV serve:%v", n)
-				serverHttp.InitHTTPFlv(mux, application.Name, sources, cb)
-				// start flv http server.
-				for _, addr := range application.HTTP.Flv.Listen {
-					go http.ListenAndServe(addr, mux)
-				}
-			}
-			if application.HTTP.Im != nil {
-				glog.Infof("Load IM serve:%v", n)
-				// TODO
-			}
-		}
+		// TODO: check
 	}
 	return nil
 }

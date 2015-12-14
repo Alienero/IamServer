@@ -41,14 +41,14 @@ type rtmp struct {
 }
 
 type http struct {
-	Flv *httpFlv `yaml:"flv"`
-	Im  *im      `yaml:"im"`
+	Flv    *httpFlv `yaml:"flv"`
+	Im     *im      `yaml:"im"`
+	Listen []string `yaml:"listen"`
 }
 
 // HTTP-FLV only can support to play live streaming.
 type httpFlv struct {
 	Enble       bool     `yaml:"enble"`
-	Listen      []string `yaml:"listen"`
 	AccessCheck []string `yaml:"access-check"` // callback method.
 }
 
@@ -56,6 +56,5 @@ type httpFlv struct {
 // It only support websocket.
 type im struct {
 	Enble       bool     `yaml:"enble"`
-	Listen      []string `yaml:"listen"`
 	AccessCheck []string `yaml:"access-check"` // callback method.
 }

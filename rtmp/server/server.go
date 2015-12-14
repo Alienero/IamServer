@@ -16,6 +16,7 @@ import (
 	"runtime"
 
 	"github.com/Alienero/IamServer/callback"
+	"github.com/Alienero/IamServer/im"
 	"github.com/Alienero/IamServer/rtmp"
 	"github.com/Alienero/IamServer/source"
 
@@ -23,18 +24,23 @@ import (
 )
 
 type SrsServer struct {
-	id      uint64
-	addr    string
-	sources *source.SourceManage
-	cb      callback.RTMP
+	id       uint64
+	addr     string
+	sources  *source.SourceManage
+	cb       callback.RTMP
+	enbleIM  bool
+	imServer *im.IMServer
 }
 
-func NewSrsServer(addr string, cb callback.RTMP, sources *source.SourceManage) *SrsServer {
+func NewSrsServer(addr string, cb callback.RTMP, sources *source.SourceManage,
+	enbleIM bool, imServer *im.IMServer) *SrsServer {
 	return &SrsServer{
-		addr:    addr,
-		sources: sources,
-		cb:      cb,
-		id:      SrsGenerateId(),
+		addr:     addr,
+		sources:  sources,
+		cb:       cb,
+		id:       SrsGenerateId(),
+		enbleIM:  enbleIM,
+		imServer: imServer,
 	}
 }
 
@@ -86,7 +92,7 @@ func (r *SrsServer) serve(conn *net.TCPConn) {
 		client *SrsClient
 		err    error
 	)
-	if client, err = NewSrsClient(conn, r.sources); err != nil {
+	if client, err = NewSrsClient(conn, r); err != nil {
 		glog.Errorf("create client failed, err=%v", err)
 		return
 	}

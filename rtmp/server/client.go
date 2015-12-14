@@ -15,7 +15,6 @@ import (
 	"net"
 	"runtime"
 
-	"github.com/Alienero/IamServer/im"
 	"github.com/Alienero/IamServer/rtmp"
 	"github.com/Alienero/IamServer/source"
 
@@ -38,20 +37,22 @@ func NewSrsResponse() *SrsResponse {
 
 // the client provides the main logic control for RTMP clients.
 type SrsClient struct {
-	conn    *net.TCPConn
-	rtmp    rtmp.Server
-	req     *rtmp.Request
-	res     *SrsResponse
-	id      uint64
-	sources *source.SourceManage
+	conn   *net.TCPConn
+	rtmp   rtmp.Server
+	req    *rtmp.Request
+	res    *SrsResponse
+	id     uint64
+	server *SrsServer
+	// rtmp key
+	key string
 }
 
-func NewSrsClient(conn *net.TCPConn, sources *source.SourceManage) (r *SrsClient, err error) {
+func NewSrsClient(conn *net.TCPConn, server *SrsServer) (r *SrsClient, err error) {
 	r = &SrsClient{
-		conn:    conn,
-		res:     NewSrsResponse(),
-		id:      SrsGenerateId(),
-		sources: sources,
+		conn:   conn,
+		res:    NewSrsResponse(),
+		id:     SrsGenerateId(),
+		server: server,
 	}
 	if r.rtmp, err = rtmp.NewServer(conn); err != nil {
 		return
@@ -183,31 +184,35 @@ func (r *SrsClient) stream_service_cycle() (err error) {
 	// set chunk size to larger.
 	// TODO: FIXME: implements it.
 
+	r.key = "/" + r.req.App + "/" + r.req.Stream
+	// callback auth.
+	if !r.server.cb.RtmpAccessCheck(r.conn.RemoteAddr().String(),
+		r.conn.LocalAddr().String(), r.req.App, r.req.Stream) {
+		glog.Infof("auth fail key:%v, remote:%v", r.key, r.conn.RemoteAddr().String())
+		return nil
+	}
+
 	// set a source to serve.
-	key := "/" + r.req.App + "/" + r.req.Stream
-	s, err := r.sources.Set(key)
+	s, err := r.server.sources.Set(r.key)
 	if err != nil {
 		return err
 	}
-	room := im.GlobalIM.Rm.Add("master") // by default.
-	defer func() {
-		room.Close()
-		im.GlobalIM.Rm.Del(room)
-	}()
+	if r.server.enbleIM {
+		room := r.server.imServer.Rm.Add(r.key)
+		defer func() {
+			room.Close()
+			r.server.imServer.Rm.Del(room)
+		}()
+	}
+
 	s.SetFlvHead()
 	defer func() {
-		r.sources.Delete(key)
+		r.server.sources.Delete(r.key)
 		s.Close()
 		glog.Info("free sources.")
 	}()
 
 	glog.Infof("discovery source by url %v", r.req.StreamUrl())
-
-	// check publish available.
-	// TODO: FIXME: implements it.
-
-	// enable gop cache if requires
-	// TODO: FIXME: implements it.
 
 	switch client_type {
 	case rtmp.CLIENT_TYPE_Play:
@@ -220,8 +225,6 @@ func (r *SrsClient) stream_service_cycle() (err error) {
 		glog.Info("start FMLE publish stream")
 
 		// on_publish
-		// TODO: FIXME: implements it.
-
 		err = r.fmle_publishing(s)
 
 		// on_unpublish
