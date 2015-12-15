@@ -43,9 +43,9 @@ function callback.im_access_check(remote, url, path,froms, cookies)
 	print("path:",path)
 
 	if path == "/im/master" then
-		return true
+		return "I am master",1,true
 	else
-		return false
+		return "",0,false
 	end
 end
 

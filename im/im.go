@@ -20,7 +20,6 @@ import (
 	"time"
 
 	"github.com/Alienero/IamServer/callback"
-	"github.com/Alienero/IamServer/monitor"
 
 	"github.com/golang/glog"
 	"golang.org/x/net/websocket"
@@ -56,8 +55,10 @@ func (server *IMServer) Init() {
 
 func (server *IMServer) handle(ws *websocket.Conn) {
 	ws.Request().ParseForm()
-	if !server.cb.IMAccessCheck(ws.Request().RemoteAddr, ws.Request().RequestURI, ws.Request().URL.Path,
-		ws.Request().Form, ws.Request().Cookies()) {
+	// check user.
+	user, access, ok := server.cb.IMAccessCheck(ws.Request().RemoteAddr, ws.Request().RequestURI,
+		ws.Request().URL.Path, ws.Request().Form, ws.Request().Cookies())
+	if !ok {
 		glog.Info("im access fail.")
 		return
 	}
@@ -70,26 +71,21 @@ func (server *IMServer) handle(ws *websocket.Conn) {
 		return
 	}
 	// check user.
-	user, ok := server.Rm.Check(consumer)
-	if !ok {
-		consumer.Close()
-		return
-	}
-	consumer.name = user.Name
+	consumer.name = user
 	consumer.r = r
-	consumer.access = user.Access
+	consumer.access = access
 	if ok := r.Add(consumer); !ok {
 		glog.Info("room is closed.")
 		consumer.Close()
 		return
 	}
-	monitor.Monitor.UserLogin()
+	server.Rm.login()
 	glog.Infof("user(ip:%v) login", ws.Request().RemoteAddr)
-	r.UserLogin()
+	r.userLogin()
 	defer func() {
 		glog.Infof("user(ip:%v) logout", ws.Request().RemoteAddr)
-		monitor.Monitor.UserLogout()
-		r.UserLogout()
+		server.Rm.logout()
+		r.userLogin()
 		r.Del(consumer)
 		consumer.Close()
 	}()
@@ -104,36 +100,26 @@ type User struct {
 
 type RoomsManage struct {
 	sync.RWMutex
-	rooms    map[string]*Room
-	idManage uint64
+	rooms     map[string]*Room
+	idManage  uint64
+	liveCount int64
 
 	typ byte // 0 is single version.
-	// callback methods.
-	Check func(c *Consumer) (*User, bool) // ok,access,name
 }
 
-// TODO: Imp it.
-func SessionCheck(c *Consumer) (*User, bool) {
-	return nil, false
+func (rm *RoomsManage) login() {
+	atomic.AddInt64(&rm.liveCount, 1)
 }
 
-func SingalCheck(c *Consumer) (*User, bool) {
-	user := c.conn.Request().FormValue("uname")
-	if user == "" {
-		user = "some bird"
-	}
-	return &User{
-		Access: 1,
-		Name:   user,
-	}, true
+func (rm *RoomsManage) logout() {
+	atomic.AddInt64(&rm.liveCount, -1)
 }
 
 func NewRoomsManage() *RoomsManage {
 	return &RoomsManage{
 		rooms: make(map[string]*Room),
 		// default use signal check method.
-		Check: SingalCheck,
-		typ:   Single,
+		typ: Single,
 	}
 }
 
@@ -178,16 +164,35 @@ func NewRoom(id string) *Room {
 	}
 }
 
-func (r *Room) UserLogin() {
-	atomic.AddInt64(&r.liveCount, 1)
+func (r *Room) userLogin() {
+	r.RLock()
+	if !r.isClosed {
+		r.RUnlock()
+		atomic.AddInt64(&r.liveCount, 1)
+	} else {
+		r.RUnlock()
+	}
 }
 
-func (r *Room) UserLogout() {
-	atomic.AddInt64(&r.liveCount, -1)
+func (r *Room) userLogout() {
+	r.RLock()
+	if !r.isClosed {
+		r.RUnlock()
+		atomic.AddInt64(&r.liveCount, -1)
+	} else {
+		r.RUnlock()
+	}
 }
 
 func (r *Room) GetLiveCount() int64 {
-	return atomic.AddInt64(&r.liveCount, 0)
+	r.RLock()
+	if r.isClosed {
+		r.RUnlock()
+		return 0
+	} else {
+		r.RUnlock()
+		return atomic.AddInt64(&r.liveCount, 0)
+	}
 }
 
 func (r *Room) Add(c *Consumer) bool {

@@ -70,7 +70,7 @@ func (l *Lua) SetFlvAccessCheck() {
 }
 
 func (l *Lua) SetIMAccessCheck() {
-	l.imAccessCheck = l.gl.GetCallParamWithFn(l.callBackModule.Get(IMAccessCheck), 1)
+	l.imAccessCheck = l.gl.GetCallParamWithFn(l.callBackModule.Get(IMAccessCheck), 3)
 }
 
 func (l *Lua) AddrMapping(public string) (private string) {
@@ -112,7 +112,7 @@ func (l *Lua) FlvAccessCheck(remote, url, path string, form url.Values, cookies 
 }
 
 // remote: remote address, url: HTTP request URL
-func (l *Lua) IMAccessCheck(remote, url, path string, form url.Values, cookies []*http.Cookie) bool {
+func (l *Lua) IMAccessCheck(remote, url, path string, form url.Values, cookies []*http.Cookie) (string, byte, bool) {
 	fms := lua.NewTalbe()
 	for k, rs := range form {
 		slice := lua.NewTalbe()
@@ -128,9 +128,9 @@ func (l *Lua) IMAccessCheck(remote, url, path string, form url.Values, cookies [
 	}
 	rets, err := l.gl.Call(l.imAccessCheck, remote, url, path, fms, cs)
 	if err != nil {
-		return false
+		return "", 0, false
 	}
-	return lua.GetBool(rets[0])
+	return lua.GetString(rets[0]), byte(lua.GetNumber(rets[1])), lua.GetBool(rets[2])
 }
 
 func (l *Lua) Close() error {

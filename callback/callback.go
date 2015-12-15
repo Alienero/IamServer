@@ -32,7 +32,7 @@ type FLV interface {
 
 // IM
 type IM interface {
-	IMAccessCheck(remote, url, path string, form url.Values, cookies []*http.Cookie) bool
+	IMAccessCheck(remote, url, path string, form url.Values, cookies []*http.Cookie) (uname string, access byte, ok bool)
 }
 
 type FlvCallback interface {

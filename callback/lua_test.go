@@ -75,11 +75,13 @@ func TestFlvCheck(t *testing.T) {
 }
 
 func TestIMCheck(t *testing.T) {
-	if ok := L.IMAccessCheck("ilulu.xyz:9009", "http://ilulu.xyz:9009", "/im/master", nil, nil); !ok {
+	if uname, access, ok := L.IMAccessCheck("ilulu.xyz:9009", "http://ilulu.xyz:9009", "/im/master", nil, nil); !ok {
 		t.Error("ne")
+	} else {
+		t.Log(uname, access)
 	}
 	fmt.Println("===")
-	if ok := L.IMAccessCheck("ilulu.xyz:9009", "http://ilulu.xyz:9009", "/im/live", nil, nil); ok {
+	if _, _, ok := L.IMAccessCheck("ilulu.xyz:9009", "http://ilulu.xyz:9009", "/im/live", nil, nil); ok {
 		t.Error("ne")
 	}
 }
