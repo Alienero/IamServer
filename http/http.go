@@ -14,10 +14,10 @@ import (
 	"encoding/json"
 	"html/template"
 	"net/http"
+	"strings"
 
 	"github.com/Alienero/IamServer/callback"
 	"github.com/Alienero/IamServer/im"
-	"github.com/Alienero/IamServer/monitor"
 	"github.com/Alienero/IamServer/source"
 
 	"github.com/golang/glog"
@@ -30,24 +30,31 @@ func InitHTTP(mux *http.ServeMux, sources *source.SourceManage, imServer *im.IMS
 		return err
 	}
 	index := func(w http.ResponseWriter, r *http.Request) {
-		user := monitor.Monitor.GetTempInfo()
 		rid := r.FormValue("room_id")
 		if rid == "" {
 			rid = "master"
 		}
 		rm := imServer.Rm.Get(rid)
-		if rm == nil {
-			user.LiveCount = 0
-		} else {
-			user.LiveCount = rm.GetLiveCount()
+		rm.GetLiveCount()
+		type User struct {
+			LiveCount int64 `json:"liveCount"` // use atomic
+			RoomName  string
+			HostName  string
 		}
-		if err := tmpl.Execute(w, user); err != nil {
+		if err := tmpl.Execute(w, User{
+			LiveCount: rm.GetLiveCount(),
+		}); err != nil {
 			glog.Error(err)
 		}
 	}
 	mux.HandleFunc("/index.html", index)
 	mux.HandleFunc("/count", func(w http.ResponseWriter, r *http.Request) {
-		user := monitor.Monitor.GetTempInfo()
+		type User struct {
+			LiveCount int64 `json:"liveCount"` // use atomic
+			RoomName  string
+			HostName  string
+		}
+		user := new(User)
 		rid := r.FormValue("room_id")
 		if rid == "" {
 			rid = "master"
@@ -77,7 +84,8 @@ func InitHTTP(mux *http.ServeMux, sources *source.SourceManage, imServer *im.IMS
 }
 
 func InitHTTPFlv(mux *http.ServeMux, app string, sources *source.SourceManage, cb callback.FlvCallback) {
-	mux.HandleFunc("/"+app, func(w http.ResponseWriter, r *http.Request) {
+	prefix := "/" + app
+	mux.HandleFunc(prefix, func(w http.ResponseWriter, r *http.Request) {
 		glog.Info("http: get an request.", r.RequestURI, r.Method)
 		if r.Method != "GET" {
 			return
@@ -88,8 +96,15 @@ func InitHTTPFlv(mux *http.ServeMux, app string, sources *source.SourceManage, c
 			w.WriteHeader(http.StatusForbidden)
 			return
 		}
-		// mapping: get the really remote address.
-		key := cb.AddrMapping(r.URL.Path)
+		// get path.
+		var key string
+		if strings.HasPrefix(r.URL.Path, prefix) {
+			key = r.URL.Path[strings.Index(r.URL.Path, prefix)+len(prefix):]
+		} else {
+			glog.Infof("%v not has perfix(%v)", r.URL.Path, prefix)
+			return
+		}
+
 		// get live source.
 		consumer, err := source.NewConsumer(sources, key)
 		if err != nil {

@@ -36,15 +36,14 @@ type IM interface {
 }
 
 type FlvCallback interface {
-	AppMapping
 	FLV
 }
 
 type IMCallback interface {
-	AppMapping
 	IM
 }
 
 type RTMPCallback interface {
+	AppMapping
 	RTMP
 }

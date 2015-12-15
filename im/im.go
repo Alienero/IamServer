@@ -276,7 +276,7 @@ func NewConsumer(server *IMServer, ws *websocket.Conn) *Consumer {
 	glog.Infof("im ws server got room_id:%v", rid)
 	return &Consumer{
 		id:        server.Rm.GetID(),
-		room:      server.cb.AddrMapping(rid),
+		room:      rid,
 		conn:      ws,
 		writeChan: make(chan *msg, MaxCache),
 		serverTyp: server.Rm.typ,

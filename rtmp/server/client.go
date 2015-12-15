@@ -184,7 +184,7 @@ func (r *SrsClient) stream_service_cycle() (err error) {
 	// set chunk size to larger.
 	// TODO: FIXME: implements it.
 
-	r.key = "/" + r.req.App + "/" + r.req.Stream
+	r.key = r.server.cb.AddrMapping(r.req.Stream)
 	// callback auth.
 	if !r.server.cb.RtmpAccessCheck(r.conn.RemoteAddr().String(),
 		r.conn.LocalAddr().String(), r.req.App, r.req.Stream) {
