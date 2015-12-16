@@ -43,28 +43,26 @@ func InitServer() error {
 		)
 
 		// IM & HTTP use one port, by default.
-		if application.HTTP != nil {
-			mux := http.NewServeMux()
-			// start http server listen.
-			for _, addr := range application.HTTP.Listen {
-				go http.ListenAndServe(addr, mux)
-			}
-			if application.HTTP.Flv != nil {
-				glog.Infof("Load HTTP-FLV serve:%v", n)
-				serverHttp.InitHTTPFlv(mux, application.Name, sources, cb)
-			}
-			if application.HTTP.Im != nil {
-				enbleIM = true
-				glog.Infof("Load IM serve:%v", n)
-				imServer = im.NewIMServer(cb)
-				imServer.Init()
-			}
-			if application.EnbleHTTPDemo {
-				serverHttp.InitHTTP(mux, sources, imServer)
-			}
+		mux := http.NewServeMux()
+		// start http server listen.
+		for _, addr := range application.HTTP.Listen {
+			go http.ListenAndServe(addr, mux)
+		}
+		if application.HTTP.Flv.Enble {
+			glog.Infof("Load HTTP-FLV serve:%v", n)
+			serverHttp.InitHTTPFlv(mux, application.Name, sources, cb)
+		}
+		if application.HTTP.Im.Enble {
+			enbleIM = true
+			glog.Infof("Load IM serve:%v", n)
+			imServer = im.NewIMServer(cb)
+			imServer.Init()
+		}
+		if application.DemoServer.Enble {
+			serverHttp.InitHTTP(mux, sources, imServer)
 		}
 
-		if application.RTMP != nil {
+		if application.RTMP.Enble {
 			glog.Infof("Load RTMP serve:%v", n)
 			// start rtmp publisher server
 			for _, addr := range application.RTMP.Listen {
