@@ -34,11 +34,9 @@ type app struct {
 
 // Rtmp only allow publisher live streaming.
 type rtmp struct {
-	Enble       bool     `yaml:"enble"`
-	Listen      []string `yaml:"listen"`
-	AppName     string   `yaml:"app-name"`
-	AccessPath  []string `yaml:"access-path"`
-	AccessCheck []string `yaml:"access-check"` // callback method.
+	Enble   bool     `yaml:"enble"`
+	Listen  []string `yaml:"listen"`
+	AppName string   `yaml:"app-name"`
 }
 
 type http struct {
@@ -49,13 +47,11 @@ type http struct {
 
 // HTTP-FLV only can support to play live streaming.
 type httpFlv struct {
-	Enble       bool     `yaml:"enble"`
-	AccessCheck []string `yaml:"access-check"` // callback method.
+	Enble bool `yaml:"enble"`
 }
 
 // A live streaming online talk room.
 // It only support websocket.
 type im struct {
-	Enble       bool     `yaml:"enble"`
-	AccessCheck []string `yaml:"access-check"` // callback method.
+	Enble bool `yaml:"enble"`
 }
