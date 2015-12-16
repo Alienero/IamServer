@@ -14,6 +14,7 @@ import (
 	"container/list"
 	"html"
 	"net/http"
+	"path"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -26,7 +27,7 @@ import (
 )
 
 const (
-	IMPath   = "/im"
+	IMPath   = "/im/"
 	MaxCache = 4096 * 2
 	// 3 sec msgs.
 	MaxMsgNum = 9
@@ -49,8 +50,8 @@ func NewIMServer(cb callback.IMCallback) *IMServer {
 	}
 }
 
-func (server *IMServer) Init() {
-	http.Handle(IMPath, websocket.Handler(server.handle))
+func (server *IMServer) Init(mux *http.ServeMux) {
+	mux.Handle(IMPath, websocket.Handler(server.handle))
 }
 
 func (server *IMServer) handle(ws *websocket.Conn) {
@@ -272,7 +273,8 @@ func NewConsumer(server *IMServer, ws *websocket.Conn) *Consumer {
 	// two method:
 	// 		1.user session.
 	// 		2.uer ws url args.
-	rid := ws.Request().FormValue("room_id")
+	_, file := path.Split(ws.Request().URL.Path)
+	rid := file[:strings.Index(file, ".room")]
 	glog.Infof("im ws server got room_id:%v", rid)
 	return &Consumer{
 		id:        server.Rm.GetID(),

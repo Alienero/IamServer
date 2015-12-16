@@ -37,6 +37,7 @@ func NewGolua() *GoLua {
 		return 1
 	}
 	gl.l.SetGlobal("_getscriptdir", gl.l.NewFunction(_getscriptdir))
+	initFunctions(L)
 	return gl
 }
 

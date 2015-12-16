@@ -1,26 +1,16 @@
-# App
 apps:
-# App name
 - name: live
-  # Callback lua's path.
-  lua-path: /home/lua
-  # RTMP config.
+  lua-path: callback/
   rtmp:
     enble: true
-    # RTMP publish server listen port.
     listen:
-    - localhost:1927
-  # HTTP server config.
+    - 0.0.0.0:1935
   http:
-    # HTTP-FLV live steaming conifg.
     flv:
       enble: true
-    # IM server connfig.
     im:
       enble: true
-    # IM server listen port.
     listen:
-    - localhost:9090
-  # HTTP demo server.
+    - 0.0.0.0:9090
   http-demo:
     enble: true

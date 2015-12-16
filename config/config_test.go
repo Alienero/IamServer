@@ -9,13 +9,14 @@ import (
 )
 
 var (
-	isWrirteTofile = true
+	isWrirteTofile = false
 )
 
 func TestDefaultConifgMarshal(t *testing.T) {
+	gopath := filepath.Join("")
 	Config.Apps = []app{app{
 		Name:    "live",
-		LuaPath: "/home/lua",
+		LuaPath: filepath.Join(gopath, "callback"),
 		RTMP: rtmp{
 			Enble:  true,
 			Listen: []string{"localhost:1927"},
@@ -40,7 +41,7 @@ func TestDefaultConifgMarshal(t *testing.T) {
 	t.Log(string(data))
 	if isWrirteTofile {
 		// write yaml config data to file.
-		path := filepath.Join(os.Getenv("GOPATH"), "/src/github.com/Alienero/IamServer/config", "config.yaml")
+		path := filepath.Join(gopath, "config", "config.yaml")
 		file, err := os.Create(path)
 		if err != nil {
 			t.Error(err)

@@ -142,7 +142,7 @@
             <div class="room-player-wrap">
 	            <video id="my-video" class="video-js" controls preload="auto" width="800px" height="530px"
 	                   poster="" data-setup="{}" autoplay="autoplay">
-		            <source src="/live" type='video/flv'>
+		            <source src="/live/master.flv" type='video/flv'>
 	            </video>
 	            <div id="my-player" class="abp" style="width:800px; height:500px; ">
 		            <a id="my-comment-stage" class="container"></a>

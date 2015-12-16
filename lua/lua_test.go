@@ -238,3 +238,14 @@ func TestModuleFn(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestLibsModule(t *testing.T) {
+	gl := NewGolua()
+	l := `
+	local m = require("libs.html")
+	print(m.html_escape("<>"))
+	`
+	if err := gl.Load(l); err != nil {
+		t.Error(err)
+	}
+}

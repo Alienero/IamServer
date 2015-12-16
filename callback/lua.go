@@ -73,8 +73,8 @@ func (l *Lua) SetIMAccessCheck() {
 	l.imAccessCheck = l.gl.GetCallParamWithFn(l.callBackModule.Get(IMAccessCheck), 3)
 }
 
-func (l *Lua) AddrMapping(public string) (private string) {
-	rets, err := l.gl.Call(l.mappingFn, public)
+func (l *Lua) AddrMapping(private string) (public string) {
+	rets, err := l.gl.Call(l.mappingFn, private)
 	if err != nil {
 		panic(err)
 	}

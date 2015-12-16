@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"html/template"
 	"net/http"
+	"path"
 	"strings"
 
 	"github.com/Alienero/IamServer/callback"
@@ -24,7 +25,7 @@ import (
 )
 
 func InitHTTP(mux *http.ServeMux, sources *source.SourceManage, imServer *im.IMServer) error {
-	tmpl, err := template.ParseFiles("../play.tpl")
+	tmpl, err := template.ParseFiles("../player/play.tpl")
 	if err != nil {
 		glog.Fatal("parse template error:", err)
 		return err
@@ -35,14 +36,19 @@ func InitHTTP(mux *http.ServeMux, sources *source.SourceManage, imServer *im.IMS
 			rid = "master"
 		}
 		rm := imServer.Rm.Get(rid)
-		rm.GetLiveCount()
+		var liveCount int64
+		if rm != nil {
+			liveCount = rm.GetLiveCount()
+		} else {
+			liveCount = 0
+		}
 		type User struct {
 			LiveCount int64 `json:"liveCount"` // use atomic
 			RoomName  string
 			HostName  string
 		}
 		if err := tmpl.Execute(w, User{
-			LiveCount: rm.GetLiveCount(),
+			LiveCount: liveCount,
 		}); err != nil {
 			glog.Error(err)
 		}
@@ -72,7 +78,7 @@ func InitHTTP(mux *http.ServeMux, sources *source.SourceManage, imServer *im.IMS
 		}
 		w.Write(data)
 	})
-	var fileServer = http.FileServer(http.Dir("../"))
+	var fileServer = http.FileServer(http.Dir("../player/"))
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
 			index(w, r)
@@ -84,9 +90,9 @@ func InitHTTP(mux *http.ServeMux, sources *source.SourceManage, imServer *im.IMS
 }
 
 func InitHTTPFlv(mux *http.ServeMux, app string, sources *source.SourceManage, cb callback.FlvCallback) {
-	prefix := "/" + app
+	prefix := path.Join("/", app) + "/"
 	mux.HandleFunc(prefix, func(w http.ResponseWriter, r *http.Request) {
-		glog.Info("http: get an request.", r.RequestURI, r.Method)
+		glog.Infof("http: get an request: %v", r.RequestURI)
 		if r.Method != "GET" {
 			return
 		}
@@ -97,13 +103,9 @@ func InitHTTPFlv(mux *http.ServeMux, app string, sources *source.SourceManage, c
 			return
 		}
 		// get path.
+		_, file := path.Split(r.URL.Path)
 		var key string
-		if strings.HasPrefix(r.URL.Path, prefix) {
-			key = r.URL.Path[strings.Index(r.URL.Path, prefix)+len(prefix):]
-		} else {
-			glog.Infof("%v not has perfix(%v)", r.URL.Path, prefix)
-			return
-		}
+		key = file[:strings.Index(file, ".flv")]
 
 		// get live source.
 		consumer, err := source.NewConsumer(sources, key)
@@ -111,6 +113,7 @@ func InitHTTPFlv(mux *http.ServeMux, app string, sources *source.SourceManage, c
 			glog.Info("can not get source", err)
 			return
 		}
+		glog.Info("get source")
 		defer consumer.Close()
 		// set flv live stream http head.
 		// TODO: let browser not cache sources.

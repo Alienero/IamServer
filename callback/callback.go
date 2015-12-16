@@ -17,7 +17,7 @@ import (
 
 // App
 type AppMapping interface {
-	AddrMapping(public string) (private string)
+	AddrMapping(private string) (public string)
 }
 
 // RTMP

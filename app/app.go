@@ -27,7 +27,6 @@ import (
 )
 
 func InitServer() error {
-	printInfo()
 	if len(config.Config.Apps) == 0 {
 		return errors.New("empty app list.")
 	}
@@ -56,7 +55,7 @@ func InitServer() error {
 			enbleIM = true
 			glog.Infof("Load IM serve:%v", n)
 			imServer = im.NewIMServer(cb)
-			imServer.Init()
+			imServer.Init(mux)
 		}
 		if application.DemoServer.Enble {
 			serverHttp.InitHTTP(mux, sources, imServer)
@@ -91,7 +90,7 @@ func initLua(luapath string) *callback.Lua {
 	return cl
 }
 
-func printInfo() {
+func PrintInfo() {
 	fmt.Println(`Powered by
 	      ___ _           _ _     _
 	     / __\ | _____  _(_) |__ | | ___

@@ -11,6 +11,7 @@
 package server
 
 import (
+	"errors"
 	"io"
 	"net"
 	"runtime"
@@ -20,6 +21,8 @@ import (
 
 	"github.com/golang/glog"
 )
+
+var authFail = errors.New("auth fail.")
 
 // default stream id for response the createStream request.
 const SRS_DEFAULT_SID = 1
@@ -144,14 +147,14 @@ func (r *SrsClient) service_cycle() (err error) {
 
 		// stream service must terminated with error, never success.
 		if err == nil {
-			glog.Infof("stream service complete success, re-identify it")
+			glog.Info("stream service complete success, re-identify it")
 			continue
 		}
 
 		// when not system control error, fatal error, return.
 		if !IsSystemControlError(err) {
 			if err == io.EOF {
-				glog.Infof("client gracefully close the peer")
+				glog.Info("client gracefully close the peer")
 				err = nil
 				return
 			}
@@ -189,7 +192,7 @@ func (r *SrsClient) stream_service_cycle() (err error) {
 	if !r.server.cb.RtmpAccessCheck(r.conn.RemoteAddr().String(),
 		r.conn.LocalAddr().String(), r.req.App, r.req.Stream) {
 		glog.Infof("auth fail key:%v, remote:%v", r.key, r.conn.RemoteAddr().String())
-		return nil
+		return authFail
 	}
 
 	// set a source to serve.
@@ -209,7 +212,7 @@ func (r *SrsClient) stream_service_cycle() (err error) {
 	defer func() {
 		r.server.sources.Delete(r.key)
 		s.Close()
-		glog.Info("free sources.")
+		glog.Info("freed sources.")
 	}()
 
 	glog.Infof("discovery source by url %v", r.req.StreamUrl())
